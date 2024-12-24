@@ -12,7 +12,6 @@ import {
 
 interface TradingViewWidgetProps {
     marketId: string
-    theme?: "light" | "dark"
 }
 
 // Mock price data - replace with actual historical data
@@ -50,10 +49,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null
 }
 
-export default function TradingViewWidget({ marketId, theme = "light" }: TradingViewWidgetProps) {
+export default function TradingViewWidget({ marketId }: TradingViewWidgetProps) {
     const data = generateMockData()
-    const textColor = theme === 'dark' ? '#DDD' : '#191919'
-    const gridColor = theme === 'dark' ? '#292929' : '#f0f0f0'
 
     return (
         <div className="w-full h-[400px]">
@@ -67,17 +64,17 @@ export default function TradingViewWidget({ marketId, theme = "light" }: Trading
                         bottom: 0,
                     }}
                 >
-                    <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis
                         dataKey="date"
-                        stroke={textColor}
-                        tick={{ fill: textColor }}
-                        tickLine={{ stroke: textColor }}
+                        stroke="#191919"
+                        tick={{ fill: "#191919" }}
+                        tickLine={{ stroke: "#191919" }}
                     />
                     <YAxis
-                        stroke={textColor}
-                        tick={{ fill: textColor }}
-                        tickLine={{ stroke: textColor }}
+                        stroke="#191919"
+                        tick={{ fill: "#191919" }}
+                        tickLine={{ stroke: "#191919" }}
                         domain={[0, 100]}
                         tickFormatter={(value) => `${value}%`}
                     />

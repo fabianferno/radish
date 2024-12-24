@@ -96,7 +96,6 @@ export default function MarketPage() {
                         <div className="col-span-2 bg-card rounded-lg p-4 h-[400px]">
                             <TradingViewWidget
                                 marketId={`MRBEAST:SUBS_${mockMarket.id}`}
-                                theme="light"
                             />
                         </div>
 
