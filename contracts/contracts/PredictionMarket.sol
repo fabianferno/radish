@@ -2,15 +2,19 @@
 pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import { UD60x18, ud } from "@prb/math/src/UD60x18.sol";
+import "./NoToken.sol";
+import "./YesToken.sol";
 
 
-contract PredictionMarket is ERC1155, Ownable {
-    // using { mul, div, ln, exp } for UD60x18;
+contract PredictionMarket is  Ownable {
+
 
     IERC20 public priceToken;
+    YesToken public yesToken;
+    NoToken public noToken;
+    uint256 public marketId;
 
     // Constants for liquidity calculations
     UD60x18 public  DECIMALS = ud(1000000000000000000);
@@ -27,8 +31,11 @@ contract PredictionMarket is ERC1155, Ownable {
     event LiquidityAdded(address indexed provider, uint256 amount);
     event TokensPurchased(address indexed buyer, uint256 tokenType, uint256 amount);
 
-    constructor(address _priceToken) ERC1155("") Ownable(0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2) {
+    constructor(address _priceToken , address _yesToken , address _noToken , uint256 _marketId) Ownable(0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2) {
         priceToken = IERC20(_priceToken);
+        yesToken = YesToken(_yesToken);
+        noToken = NoToken(_noToken);
+        marketId = _marketId;
     }
 
     /**
@@ -72,10 +79,12 @@ contract PredictionMarket is ERC1155, Ownable {
         require(priceToken.transferFrom(msg.sender, address(this), cost.unwrap()), "Payment failed");
 
         if (isYesToken) {
-            _mint(msg.sender, YES_TOKEN, amount.unwrap(), "");
+            yesToken.mint(msg.sender, marketId, amount.unwrap(), "");
+            // _mint(msg.sender, YES_TOKEN, amount.unwrap(), "");
             qYes = qYes.add(amount);
         } else {
-            _mint(msg.sender, NO_TOKEN, amount.unwrap(), "");
+            noToken.mint(msg.sender, marketId, amount.unwrap(), "");
+            // _mint(msg.sender, NO_TOKEN, amount.unwrap(), "");
             qNo = qNo.add(amount);
         }
 
@@ -84,16 +93,15 @@ contract PredictionMarket is ERC1155, Ownable {
 
     /**
      * @notice Gets the price of a given token (YES or NO) based on the market state.
-     * @param tokenType The type of token (1 for YES, 2 for NO).
+     * @param isYesToken The type of token (true for YES, false for NO).
      * @return price The price of the token in fixed-point format.
      */
-    function getTokenPrice(uint256 tokenType) public view returns (UD60x18 price) {
-        require(tokenType == YES_TOKEN || tokenType == NO_TOKEN, "Invalid token type");
+    function getTokenPrice(bool isYesToken) public view returns (UD60x18 price) {
 
         UD60x18 numerator;
         UD60x18 denominator = qYes.div(LIQUIDITY_PARAMETER).exp().add(qNo.div(LIQUIDITY_PARAMETER).exp());
 
-        if (tokenType == YES_TOKEN) {
+        if (isYesToken) {
             numerator = qYes.div(LIQUIDITY_PARAMETER).exp();
         } else {
             numerator = qNo.div(LIQUIDITY_PARAMETER).exp();
