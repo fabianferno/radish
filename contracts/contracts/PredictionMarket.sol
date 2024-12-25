@@ -10,11 +10,23 @@ import "./YesToken.sol";
 
 contract PredictionMarket is  Ownable {
 
-
     IERC20 public priceToken;
     YesToken public yesToken;
     NoToken public noToken;
-    uint256 public marketId;
+
+
+    struct Market {
+        uint256 id;  // unique identifier for the market
+        string question; // the question being asked
+        uint256 endTime; // timestamp when the market ends
+        uint256 totalStaked; // total amount of tokens staked
+        uint256 totalYes; // total amount of tokens staked on YES
+        uint256 totalNo; // total amount of tokens staked on NO
+        bool resolved; // true if the market has been resolved
+        bool won;  // true if YES won, false if NO won
+    }
+
+    Market public market;
 
     // Constants for liquidity calculations
     UD60x18 public  DECIMALS = ud(1000000000000000000);
@@ -30,12 +42,56 @@ contract PredictionMarket is  Ownable {
 
     event LiquidityAdded(address indexed provider, uint256 amount);
     event TokensPurchased(address indexed buyer, uint256 tokenType, uint256 amount);
+    event yesTokenbalance(uint256 balance);
 
-    constructor(address _priceToken , address _yesToken , address _noToken , uint256 _marketId) Ownable(0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2) {
+    constructor(address _priceToken , address _yesToken , address _noToken , uint256 _marketId , string memory _question , uint256 _endtime) Ownable(0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2) {
         priceToken = IERC20(_priceToken);
         yesToken = YesToken(_yesToken);
         noToken = NoToken(_noToken);
-        marketId = _marketId;
+        market = Market({
+            id: _marketId,
+            question: _question,
+            endTime: _endtime,
+            totalStaked: 0,
+            totalYes: 0,
+            totalNo: 0,
+            resolved: false,
+            won: false
+        });
+    }
+
+
+    /**
+     * @notice Votes on a given market by staking tokens on YES or NO.
+     * @param isYesToken Indicates if the token being staked is YES (true) or NO (false).
+     * @param amount the amount of tokens to stake.
+     */
+
+    function vote(bool isYesToken, UD60x18 amount) public {
+        // require(block.timestamp < market.endTime, "Voting has ended");
+        require(amount.unwrap() > 0, "Amount must be greater than zero");
+
+        if (isYesToken) {
+            emit yesTokenbalance (yesToken.balanceOf(msg.sender, market.id));
+            require(yesToken.balanceOf(msg.sender, market.id) >= amount.unwrap(), "Insufficient balance");
+            yesToken.burn(msg.sender, market.id, amount.unwrap());
+            qYes = qYes.add(amount);
+            market.totalYes = market.totalYes + amount.unwrap();
+        } else {
+            require(noToken.balanceOf(msg.sender, market.id) >= amount.unwrap(), "Insufficient balance");
+            noToken.burn(msg.sender, market.id, amount.unwrap());
+            qNo = qNo.add(amount);
+            market.totalNo = market.totalNo + amount.unwrap();
+        }
+        market.totalStaked = market.totalStaked + amount.unwrap();
+    }
+
+    function resolve() public {
+        // require(block.timestamp >= market.endTime, "Voting has not ended");
+        require(!market.resolved, "Market already resolved");
+
+        market.resolved = true;
+        market.won = market.totalYes > market.totalNo;
     }
 
     /**
@@ -76,14 +132,18 @@ contract PredictionMarket is  Ownable {
     function buy(bool isYesToken, UD60x18 amount) public {
         UD60x18 cost = getCost(isYesToken, amount);
 
+        require(priceToken.balanceOf(msg.sender) >= cost.unwrap(), "Insufficient balance");
+        require (priceToken.allowance(msg.sender, address(this)) >= cost.unwrap(), "Insufficient allowance");
         require(priceToken.transferFrom(msg.sender, address(this), cost.unwrap()), "Payment failed");
 
+
+
         if (isYesToken) {
-            yesToken.mint(msg.sender, marketId, amount.unwrap(), "");
+            yesToken.mint(msg.sender, market.id, amount.unwrap(), "");
             // _mint(msg.sender, YES_TOKEN, amount.unwrap(), "");
             qYes = qYes.add(amount);
         } else {
-            noToken.mint(msg.sender, marketId, amount.unwrap(), "");
+            noToken.mint(msg.sender, market.id, amount.unwrap(), "");
             // _mint(msg.sender, NO_TOKEN, amount.unwrap(), "");
             qNo = qNo.add(amount);
         }
@@ -108,5 +168,35 @@ contract PredictionMarket is  Ownable {
         }
 
         price = numerator.div(denominator);
+    }
+
+    /**
+     * @notice Returns the current state of the market.
+     * @return marketState The current state of the market.
+     */
+    function getMarketState() public view returns (Market memory marketState) {
+        return market;
+    }
+
+    /**
+     * @notice Returns the current quantities of YES and NO tokens.
+     * @return yesQuantity The current quantity of YES tokens.
+     * @return noQuantity The current quantity of NO tokens.
+     */
+    function getTokenQuantities() public view returns (UD60x18 yesQuantity, UD60x18 noQuantity) {
+        return (qYes, qNo);
+    }
+
+    /**
+     * @notice Returns the current balances of the price token, YES token, and NO token for a given address.
+     * @param account The address to query the balances for.
+     * @return priceTokenBalance The balance of the price token.
+     * @return yesTokenBalance The balance of the YES token.
+     * @return noTokenBalance The balance of the NO token.
+     */
+    function getBalances(address account) public view returns (uint256 priceTokenBalance, uint256 yesTokenBalance, uint256 noTokenBalance) {
+        priceTokenBalance = priceToken.balanceOf(account);
+        yesTokenBalance = yesToken.balanceOf(account, market.id);
+        noTokenBalance = noToken.balanceOf(account, market.id);
     }
 }

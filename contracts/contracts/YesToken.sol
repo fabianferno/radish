@@ -25,4 +25,12 @@ contract YesToken is ERC1155, Ownable, ERC1155Burnable {
     {
         _mintBatch(to, ids, amounts, data);
     }
+
+    function burn(address account, uint256 id, uint256 amount) public override {
+        _burn(account, id, amount);
+    }
+
+    function balanceOf(address account, uint256 id) public view override returns (uint256) {
+        return super.balanceOf(account, id);
+    }
 }
