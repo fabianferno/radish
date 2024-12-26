@@ -13,6 +13,7 @@ contract PredictionMarket is  Ownable {
     IERC20 public priceToken;
     YesToken public yesToken;
     NoToken public noToken;
+    address resolver = 0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2;
 
 
     struct Market {
@@ -24,6 +25,7 @@ contract PredictionMarket is  Ownable {
         uint256 totalNo; // total amount of tokens staked on NO
         bool resolved; // true if the market has been resolved
         bool won;  // true if YES won, false if NO won
+        uint256 totalPriceToken; // total amount of price token in the market (value of the entire market)
     }
 
     Market public market;
@@ -32,16 +34,14 @@ contract PredictionMarket is  Ownable {
     UD60x18 public  DECIMALS = ud(1000000000000000000);
     UD60x18 public  LIQUIDITY_PARAMETER = ud(10000000000000000000);
 
-    // Tokens
-    uint256 public constant YES_TOKEN = 1;
-    uint256 public constant NO_TOKEN = 2;
 
     // Market state variables
     UD60x18 public qYes = ud(0); // YES token quantity
     UD60x18 public qNo = ud(0);  // NO token quantity
 
     event LiquidityAdded(address indexed provider, uint256 amount);
-    event TokensPurchased(address indexed buyer, uint256 tokenType, uint256 amount);
+    event TokensPurchased(address indexed buyer, uint256 tokentype, uint256 amount);
+    event TokensSold(address indexed seller, uint256 tokentype, uint256 amount);
     event yesTokenbalance(uint256 balance);
 
     constructor(address _priceToken , address _yesToken , address _noToken , uint256 _marketId , string memory _question , uint256 _endtime) Ownable(0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2) {
@@ -56,11 +56,17 @@ contract PredictionMarket is  Ownable {
             totalYes: 0,
             totalNo: 0,
             resolved: false,
-            won: false
+            won: false,
+            totalPriceToken: 0
         });
     }
 
 
+    modifier onlyResolver() {
+        require(msg.sender == resolver, "Only resolver can call this function");
+        _;
+    }
+    
     /**
      * @notice Votes on a given market by staking tokens on YES or NO.
      * @param isYesToken Indicates if the token being staked is YES (true) or NO (false).
@@ -86,12 +92,12 @@ contract PredictionMarket is  Ownable {
         market.totalStaked = market.totalStaked + amount.unwrap();
     }
 
-    function resolve() public {
+    function resolve() public onlyResolver{
         // require(block.timestamp >= market.endTime, "Voting has not ended");
         require(!market.resolved, "Market already resolved");
-
         market.resolved = true;
         market.won = market.totalYes > market.totalNo;
+        market.totalPriceToken = priceToken.balanceOf(address(this));
     }
 
     /**
@@ -130,6 +136,12 @@ contract PredictionMarket is  Ownable {
      * @param amount The amount of tokens to purchase.
      */
     function buy(bool isYesToken, UD60x18 amount) public {
+
+        require(amount.unwrap() > 0, "Amount must be greater than zero");
+        require(!market.resolved, "Market already resolved");
+        require(amount.unwrap() <= 1000000000000000000 , "Minimum you should buy atleast 1 tokens");
+        require(amount.unwrap() <= 10000000000000000000 , "Maximum you can buy only 10 tokens at a time");
+
         UD60x18 cost = getCost(isYesToken, amount);
 
         require(priceToken.balanceOf(msg.sender) >= cost.unwrap(), "Insufficient balance");
@@ -142,14 +154,58 @@ contract PredictionMarket is  Ownable {
             yesToken.mint(msg.sender, market.id, amount.unwrap(), "");
             // _mint(msg.sender, YES_TOKEN, amount.unwrap(), "");
             qYes = qYes.add(amount);
+            market.totalYes = market.totalYes + amount.unwrap();
         } else {
             noToken.mint(msg.sender, market.id, amount.unwrap(), "");
             // _mint(msg.sender, NO_TOKEN, amount.unwrap(), "");
             qNo = qNo.add(amount);
+            market.totalNo = market.totalNo + amount.unwrap();
         }
 
-        emit TokensPurchased(msg.sender, isYesToken ? YES_TOKEN : NO_TOKEN, amount.unwrap());
+        market.totalStaked = market.totalStaked + amount.unwrap();
+        emit TokensPurchased(msg.sender, isYesToken ?  1: 2, amount.unwrap());
     }
+
+
+    function sell(bool isYesToken , UD60x18 amount) public {
+        require(amount.unwrap() > 0, "Amount must be greater than zero");
+        require(!market.resolved, "Market already resolved");
+
+        if (isYesToken) {
+            require(yesToken.balanceOf(msg.sender, market.id) >= amount.unwrap(), "Insufficient balance");
+            yesToken.transfer(address(this), market.id, amount.unwrap());
+            qYes = qYes.sub(amount);
+            market.totalYes = market.totalYes - amount.unwrap();
+        } else {
+            require(noToken.balanceOf(msg.sender, market.id) >= amount.unwrap(), "Insufficient balance");
+            noToken.transfer(address(this), market.id, amount.unwrap());
+            qNo = qNo.sub(amount);
+            market.totalNo = market.totalNo - amount.unwrap();
+        }
+        market.totalStaked = market.totalStaked - amount.unwrap();
+        emit TokensSold(msg.sender, isYesToken ?  1: 2, amount.unwrap());
+    }
+
+    function claimReward() public {
+        require(market.resolved, "Market not resolved");
+        
+
+        if (market.won) {
+            require(yesToken.balanceOf(msg.sender, market.id) > 0, "No YES tokens staked");
+            uint256 reward = yesToken.balanceOf(msg.sender, market.id) * market.totalPriceToken / market.totalYes;
+            require(priceToken.transfer(msg.sender , reward), "Payment failed");
+            yesToken.burn(msg.sender, market.id, yesToken.balanceOf(msg.sender, market.id));
+
+        } else {
+            require(noToken.balanceOf(msg.sender, market.id) > 0, "No NO tokens staked");
+            uint256 reward = noToken.balanceOf(msg.sender, market.id) * market.totalPriceToken / market.totalNo;
+            require(priceToken.transfer(msg.sender , reward), "Payment failed");
+            noToken.burn(msg.sender, market.id, noToken.balanceOf(msg.sender, market.id));
+        }
+
+    }
+
+    
 
     /**
      * @notice Gets the price of a given token (YES or NO) based on the market state.

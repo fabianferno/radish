@@ -16,6 +16,7 @@ contract YesToken is ERC1155, Ownable, ERC1155Burnable {
     function mint(address account, uint256 id, uint256 amount, bytes memory data)
         public
     {
+        //require(msg.sender == contractAddresses[id] ,"Only the Prediction Market contract can mint this token");
         _mint(account, id, amount, data);
     }
 
@@ -32,5 +33,9 @@ contract YesToken is ERC1155, Ownable, ERC1155Burnable {
 
     function balanceOf(address account, uint256 id) public view override returns (uint256) {
         return super.balanceOf(account, id);
+    }
+    function transfer(address to, uint256 id, uint256 amount) public {
+        require(balanceOf(msg.sender, id) >= amount, "Insufficient balance");
+        safeTransferFrom(msg.sender, to, id, amount, "");
     }
 }

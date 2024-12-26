@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 import "./PredictionMarket.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MarketFactory is Ownable{
+contract RadishCore is Ownable{
     uint256 public marketCount;
 
     address public priceToken; 
