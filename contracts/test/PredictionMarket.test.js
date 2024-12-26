@@ -20,7 +20,7 @@ describe("Prediction Market System", function () {
     const noToken = await NoToken.deploy(owner.address);
 
     // Deploy factory
-    const MarketFactory = await ethers.getContractFactory("MarketFactory");
+    const MarketFactory = await ethers.getContractFactory("RadishCore");
     const marketFactory = await MarketFactory.deploy(
       await priceToken.getAddress(),
       await yesToken.getAddress(),
@@ -28,7 +28,7 @@ describe("Prediction Market System", function () {
     );
 
     // Create a test market
-    const question = "Will ETH reach $5000 in 2024?";
+    const question = "Will BTC reach $150k in 2024?";
     const endTime = Math.floor(Date.now() / 1000) + 86400; // 24 hours from now
 
     await marketFactory.createMarket(question, endTime);

@@ -144,8 +144,6 @@ contract PredictionMarket is  Ownable {
 
         UD60x18 cost = getCost(isYesToken, amount);
 
-        require(priceToken.balanceOf(msg.sender) >= cost.unwrap(), "Insufficient balance");
-        require (priceToken.allowance(msg.sender, address(this)) >= cost.unwrap(), "Insufficient allowance");
         require(priceToken.transferFrom(msg.sender, address(this), cost.unwrap()), "Payment failed");
 
 

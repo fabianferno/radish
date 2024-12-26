@@ -2,7 +2,7 @@ const { ethers } = require("hardhat");
 
 async function main() {
   // Get the contract factory
-  const owner = "0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2";
+  const owner = "0xC235f79955B155769b7e4597e93ce7eDFc4c315b";
   const YesToken = await ethers.getContractFactory("YesToken");
   const NoToken = await ethers.getContractFactory("NoToken");
 
