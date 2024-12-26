@@ -6,19 +6,27 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./YesToken.sol";
 import "./NoToken.sol";
 
-contract RadishCore is Ownable{
+contract RadishCore is Ownable {
     uint256 public marketCount;
 
-    address public priceToken; 
+    address public priceToken;
     address public yesToken;
     address public noToken;
     YesToken public yesTokenContract;
     NoToken public noTokenContract;
 
-    event MarketCreated(uint256 id, string question, uint256 endTime , address marketContract);
+    event MarketCreated(
+        uint256 id,
+        string question,
+        uint256 endTime,
+        address marketContract
+    );
 
-
-    constructor( address _priceToken , address _yesToken , address _noToken) Ownable(msg.sender) {
+    constructor(
+        address _priceToken,
+        address _yesToken,
+        address _noToken
+    ) Ownable(msg.sender) {
         marketCount = 0;
         priceToken = _priceToken;
         yesToken = _yesToken;
@@ -51,14 +59,24 @@ contract RadishCore is Ownable{
         return noToken;
     }
 
-    function createMarket(
-        string memory _question,
-        uint256 _endtime
-    ) public {
-        PredictionMarket market = new PredictionMarket(priceToken, yesToken, noToken, marketCount, _question, _endtime);
-        // Whitelisting contract to mint Yes and No tokens
-        yesTokenContract.addPredictionMarket(marketCount,address(market));
-        noTokenContract.addPredictionMarket(marketCount,address(market));
+    function createMarket(string memory _question, uint256 _endtime) public {
+        // Create the market first
+        PredictionMarket market = new PredictionMarket(
+            priceToken,
+            yesToken,
+            noToken,
+            marketCount,
+            _question,
+            _endtime
+        );
+
+        // Register the market with the token contracts
+        yesTokenContract.addPredictionMarket(marketCount, address(market));
+        noTokenContract.addPredictionMarket(marketCount, address(market));
+
+        // Initialize the market after registration
+        market.initializeLiquidity();
+
         marketCount++;
 
         emit MarketCreated(marketCount, _question, _endtime, address(market));

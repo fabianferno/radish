@@ -2,49 +2,60 @@
 pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import { UD60x18, ud } from "@prb/math/src/UD60x18.sol";
+import {UD60x18, ud} from "@prb/math/src/UD60x18.sol";
 import "./NoToken.sol";
 import "./YesToken.sol";
 
-
-contract PredictionMarket is  Ownable {
-
+contract PredictionMarket is Ownable, IERC1155Receiver {
     IERC20 public priceToken;
     YesToken public yesToken;
     NoToken public noToken;
     address resolver = 0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2;
 
-
     struct Market {
-        uint256 id;  // unique identifier for the market
+        uint256 id; // unique identifier for the market
         string question; // the question being asked
         uint256 endTime; // timestamp when the market ends
         uint256 totalStaked; // total amount of tokens staked
         uint256 totalYes; // total amount of tokens staked on YES
         uint256 totalNo; // total amount of tokens staked on NO
         bool resolved; // true if the market has been resolved
-        bool won;  // true if YES won, false if NO won
+        bool won; // true if YES won, false if NO won
         uint256 totalPriceToken; // total amount of price token in the market (value of the entire market)
     }
 
     Market public market;
 
     // Constants for liquidity calculations
-    UD60x18 public  DECIMALS = ud(1000000000000000000);
-    UD60x18 public  LIQUIDITY_PARAMETER = ud(10000000000000000000);
-
+    UD60x18 public DECIMALS = ud(1000000000000000000);
+    UD60x18 public LIQUIDITY_PARAMETER = ud(10000000000000000000);
+    uint256 public constant INITIAL_LIQUIDITY = 1000 * 10 ** 18; // 1000 tokens of each type
 
     // Market state variables
     UD60x18 public qYes = ud(0); // YES token quantity
-    UD60x18 public qNo = ud(0);  // NO token quantity
+    UD60x18 public qNo = ud(0); // NO token quantity
 
     event LiquidityAdded(address indexed provider, uint256 amount);
-    event TokensPurchased(address indexed buyer, uint256 tokentype, uint256 amount);
+    event TokensPurchased(
+        address indexed buyer,
+        uint256 tokentype,
+        uint256 amount
+    );
     event TokensSold(address indexed seller, uint256 tokentype, uint256 amount);
     event yesTokenbalance(uint256 balance);
+    event MarketResolved(uint256 marketId, bool result);
+    event RewardClaimed(address indexed user, uint256 amount);
 
-    constructor(address _priceToken , address _yesToken , address _noToken , uint256 _marketId , string memory _question , uint256 _endtime) Ownable(0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2) {
+    constructor(
+        address _priceToken,
+        address _yesToken,
+        address _noToken,
+        uint256 _marketId,
+        string memory _question,
+        uint256 _endtime
+    ) Ownable(0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2) {
         priceToken = IERC20(_priceToken);
         yesToken = YesToken(_yesToken);
         noToken = NoToken(_noToken);
@@ -61,43 +72,64 @@ contract PredictionMarket is  Ownable {
         });
     }
 
-
     modifier onlyResolver() {
         require(msg.sender == resolver, "Only resolver can call this function");
         _;
     }
-    
-    /**
-     * @notice Votes on a given market by staking tokens on YES or NO.
-     * @param isYesToken Indicates if the token being staked is YES (true) or NO (false).
-     * @param amount the amount of tokens to stake.
-     */
 
-    function vote(bool isYesToken, UD60x18 amount) public {
-        // require(block.timestamp < market.endTime, "Voting has ended");
-        require(amount.unwrap() > 0, "Amount must be greater than zero");
-
-        if (isYesToken) {
-            emit yesTokenbalance (yesToken.balanceOf(msg.sender, market.id));
-            require(yesToken.balanceOf(msg.sender, market.id) >= amount.unwrap(), "Insufficient balance");
-            yesToken.burn(msg.sender, market.id, amount.unwrap());
-            qYes = qYes.add(amount);
-            market.totalYes = market.totalYes + amount.unwrap();
-        } else {
-            require(noToken.balanceOf(msg.sender, market.id) >= amount.unwrap(), "Insufficient balance");
-            noToken.burn(msg.sender, market.id, amount.unwrap());
-            qNo = qNo.add(amount);
-            market.totalNo = market.totalNo + amount.unwrap();
-        }
-        market.totalStaked = market.totalStaked + amount.unwrap();
+    modifier marketActive() {
+        require(!market.resolved, "Market is resolved");
+        require(block.timestamp < market.endTime, "Market has ended");
+        _;
     }
 
-    function resolve() public onlyResolver{
-        // require(block.timestamp >= market.endTime, "Voting has not ended");
+    function initializeLiquidity() public marketActive {
+        require(
+            qYes.unwrap() == 0 && qNo.unwrap() == 0,
+            "Liquidity already initialized"
+        );
+        yesToken.mint(address(this), market.id, INITIAL_LIQUIDITY, "");
+        noToken.mint(address(this), market.id, INITIAL_LIQUIDITY, "");
+        qYes = ud(INITIAL_LIQUIDITY);
+        qNo = ud(INITIAL_LIQUIDITY);
+    }
+
+    // IERC1155Receiver implementation
+    function onERC1155Received(
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes memory
+    ) public virtual override returns (bytes4) {
+        return this.onERC1155Received.selector;
+    }
+
+    function onERC1155BatchReceived(
+        address,
+        address,
+        uint256[] memory,
+        uint256[] memory,
+        bytes memory
+    ) public virtual override returns (bytes4) {
+        return this.onERC1155BatchReceived.selector;
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override returns (bool) {
+        return interfaceId == type(IERC1155Receiver).interfaceId;
+    }
+
+    function resolve() public onlyResolver {
+        require(block.timestamp >= market.endTime, "Market has not ended");
         require(!market.resolved, "Market already resolved");
+
         market.resolved = true;
         market.won = market.totalYes > market.totalNo;
         market.totalPriceToken = priceToken.balanceOf(address(this));
+
+        emit MarketResolved(market.id, market.won);
     }
 
     /**
@@ -106,23 +138,39 @@ contract PredictionMarket is  Ownable {
      * @param amount The amount of tokens to purchase.
      * @return price The cost of the specified amount of tokens.
      */
-    function getCost(bool isYesToken, UD60x18 amount) public view returns (UD60x18 price) {
+    function getCost(
+        bool isYesToken,
+        UD60x18 amount
+    ) public view returns (UD60x18 price) {
         require(amount.unwrap() > 0, "Amount must be greater than zero");
 
         // Current total cost
         UD60x18 totalCost = LIQUIDITY_PARAMETER.mul(
-            qYes.div(LIQUIDITY_PARAMETER).exp().add(qNo.div(LIQUIDITY_PARAMETER).exp()).ln()
+            qYes
+                .div(LIQUIDITY_PARAMETER)
+                .exp()
+                .add(qNo.div(LIQUIDITY_PARAMETER).exp())
+                .ln()
         );
 
         // New cost after adding the tokens
         UD60x18 newCost;
         if (isYesToken) {
             newCost = LIQUIDITY_PARAMETER.mul(
-                qYes.add(amount).div(LIQUIDITY_PARAMETER).exp().add(qNo.div(LIQUIDITY_PARAMETER).exp()).ln()
+                qYes
+                    .add(amount)
+                    .div(LIQUIDITY_PARAMETER)
+                    .exp()
+                    .add(qNo.div(LIQUIDITY_PARAMETER).exp())
+                    .ln()
             );
         } else {
             newCost = LIQUIDITY_PARAMETER.mul(
-                qYes.div(LIQUIDITY_PARAMETER).exp().add(qNo.add(amount).div(LIQUIDITY_PARAMETER).exp()).ln()
+                qYes
+                    .div(LIQUIDITY_PARAMETER)
+                    .exp()
+                    .add(qNo.add(amount).div(LIQUIDITY_PARAMETER).exp())
+                    .ln()
             );
         }
 
@@ -135,85 +183,160 @@ contract PredictionMarket is  Ownable {
      * @param isYesToken Indicates if the token being purchased is YES (true) or NO (false).
      * @param amount The amount of tokens to purchase.
      */
-    function buy(bool isYesToken, UD60x18 amount) public {
-
+    function buy(bool isYesToken, UD60x18 amount) public marketActive {
         require(amount.unwrap() > 0, "Amount must be greater than zero");
-        require(!market.resolved, "Market already resolved");
-        require(amount.unwrap() <= 1000000000000000000 , "Minimum you should buy atleast 1 tokens");
-        require(amount.unwrap() <= 10000000000000000000 , "Maximum you can buy only 10 tokens at a time");
 
+        // Calculate cost using LMSR
         UD60x18 cost = getCost(isYesToken, amount);
 
-        require(priceToken.transferFrom(msg.sender, address(this), cost.unwrap()), "Payment failed");
-
-
-
+        // Check liquidity first
         if (isYesToken) {
-            yesToken.mint(msg.sender, market.id, amount.unwrap(), "");
-            // _mint(msg.sender, YES_TOKEN, amount.unwrap(), "");
+            require(
+                yesToken.balanceOf(address(this), market.id) >= amount.unwrap(),
+                "Insufficient liquidity"
+            );
+        } else {
+            require(
+                noToken.balanceOf(address(this), market.id) >= amount.unwrap(),
+                "Insufficient liquidity"
+            );
+        }
+
+        // Transfer price token from user (removed duplicate transfer)
+        require(
+            priceToken.transferFrom(msg.sender, address(this), cost.unwrap()),
+            "Payment failed"
+        );
+
+        // Update state before transfer to prevent reentrancy
+        if (isYesToken) {
             qYes = qYes.add(amount);
             market.totalYes = market.totalYes + amount.unwrap();
         } else {
-            noToken.mint(msg.sender, market.id, amount.unwrap(), "");
-            // _mint(msg.sender, NO_TOKEN, amount.unwrap(), "");
             qNo = qNo.add(amount);
             market.totalNo = market.totalNo + amount.unwrap();
         }
-
         market.totalStaked = market.totalStaked + amount.unwrap();
-        emit TokensPurchased(msg.sender, isYesToken ?  1: 2, amount.unwrap());
+
+        // Transfer prediction tokens to user
+        if (isYesToken) {
+            yesToken.safeTransferFrom(
+                address(this),
+                msg.sender,
+                market.id,
+                amount.unwrap(),
+                ""
+            );
+        } else {
+            noToken.safeTransferFrom(
+                address(this),
+                msg.sender,
+                market.id,
+                amount.unwrap(),
+                ""
+            );
+        }
+
+        emit TokensPurchased(msg.sender, isYesToken ? 1 : 2, amount.unwrap());
     }
 
-
-    function sell(bool isYesToken , UD60x18 amount) public {
+    function sell(bool isYesToken, UD60x18 amount) public marketActive {
         require(amount.unwrap() > 0, "Amount must be greater than zero");
-        require(!market.resolved, "Market already resolved");
 
+        // Calculate return amount
+        UD60x18 returnAmount = getCost(isYesToken, amount);
+
+        // Check user balance first
         if (isYesToken) {
-            require(yesToken.balanceOf(msg.sender, market.id) >= amount.unwrap(), "Insufficient balance");
-            yesToken.transfer(address(this), market.id, amount.unwrap());
+            require(
+                yesToken.balanceOf(msg.sender, market.id) >= amount.unwrap(),
+                "Insufficient balance"
+            );
+        } else {
+            require(
+                noToken.balanceOf(msg.sender, market.id) >= amount.unwrap(),
+                "Insufficient balance"
+            );
+        }
+
+        // Update state before transfers
+        if (isYesToken) {
             qYes = qYes.sub(amount);
             market.totalYes = market.totalYes - amount.unwrap();
         } else {
-            require(noToken.balanceOf(msg.sender, market.id) >= amount.unwrap(), "Insufficient balance");
-            noToken.transfer(address(this), market.id, amount.unwrap());
             qNo = qNo.sub(amount);
             market.totalNo = market.totalNo - amount.unwrap();
         }
         market.totalStaked = market.totalStaked - amount.unwrap();
-        emit TokensSold(msg.sender, isYesToken ?  1: 2, amount.unwrap());
+
+        // Transfer tokens from user to contract
+        if (isYesToken) {
+            yesToken.safeTransferFrom(
+                msg.sender,
+                address(this),
+                market.id,
+                amount.unwrap(),
+                ""
+            );
+        } else {
+            noToken.safeTransferFrom(
+                msg.sender,
+                address(this),
+                market.id,
+                amount.unwrap(),
+                ""
+            );
+        }
+
+        // Transfer price tokens back to user
+        require(
+            priceToken.transfer(msg.sender, returnAmount.unwrap()),
+            "Return payment failed"
+        );
+
+        emit TokensSold(msg.sender, isYesToken ? 1 : 2, amount.unwrap());
     }
 
     function claimReward() public {
         require(market.resolved, "Market not resolved");
-        
 
+        uint256 reward = 0;
         if (market.won) {
-            require(yesToken.balanceOf(msg.sender, market.id) > 0, "No YES tokens staked");
-            uint256 reward = yesToken.balanceOf(msg.sender, market.id) * market.totalPriceToken / market.totalYes;
-            require(priceToken.transfer(msg.sender , reward), "Payment failed");
-            yesToken.burn(msg.sender, market.id, yesToken.balanceOf(msg.sender, market.id));
-
+            uint256 balance = yesToken.balanceOf(msg.sender, market.id);
+            require(balance > 0, "No YES tokens held");
+            reward = (balance * market.totalPriceToken) / market.totalYes;
+            yesToken.burn(msg.sender, market.id, balance);
         } else {
-            require(noToken.balanceOf(msg.sender, market.id) > 0, "No NO tokens staked");
-            uint256 reward = noToken.balanceOf(msg.sender, market.id) * market.totalPriceToken / market.totalNo;
-            require(priceToken.transfer(msg.sender , reward), "Payment failed");
-            noToken.burn(msg.sender, market.id, noToken.balanceOf(msg.sender, market.id));
+            uint256 balance = noToken.balanceOf(msg.sender, market.id);
+            require(balance > 0, "No NO tokens held");
+            reward = (balance * market.totalPriceToken) / market.totalNo;
+            noToken.burn(msg.sender, market.id, balance);
         }
 
+        require(priceToken.transfer(msg.sender, reward), "Payment failed");
+
+        emit RewardClaimed(msg.sender, reward);
     }
 
-    
+    // Emergency function to add liquidity if needed
+    function addLiquidity(uint256 amount) external onlyOwner marketActive {
+        yesToken.mint(address(this), market.id, amount, "");
+        noToken.mint(address(this), market.id, amount, "");
+        // Note: This should rarely/never be needed due to LMSR mechanics
+    }
 
     /**
      * @notice Gets the price of a given token (YES or NO) based on the market state.
      * @param isYesToken The type of token (true for YES, false for NO).
      * @return price The price of the token in fixed-point format.
      */
-    function getTokenPrice(bool isYesToken) public view returns (UD60x18 price) {
-
+    function getTokenPrice(
+        bool isYesToken
+    ) public view returns (UD60x18 price) {
         UD60x18 numerator;
-        UD60x18 denominator = qYes.div(LIQUIDITY_PARAMETER).exp().add(qNo.div(LIQUIDITY_PARAMETER).exp());
+        UD60x18 denominator = qYes.div(LIQUIDITY_PARAMETER).exp().add(
+            qNo.div(LIQUIDITY_PARAMETER).exp()
+        );
 
         if (isYesToken) {
             numerator = qYes.div(LIQUIDITY_PARAMETER).exp();
@@ -237,7 +360,11 @@ contract PredictionMarket is  Ownable {
      * @return yesQuantity The current quantity of YES tokens.
      * @return noQuantity The current quantity of NO tokens.
      */
-    function getTokenQuantities() public view returns (UD60x18 yesQuantity, UD60x18 noQuantity) {
+    function getTokenQuantities()
+        public
+        view
+        returns (UD60x18 yesQuantity, UD60x18 noQuantity)
+    {
         return (qYes, qNo);
     }
 
@@ -248,7 +375,17 @@ contract PredictionMarket is  Ownable {
      * @return yesTokenBalance The balance of the YES token.
      * @return noTokenBalance The balance of the NO token.
      */
-    function getBalances(address account) public view returns (uint256 priceTokenBalance, uint256 yesTokenBalance, uint256 noTokenBalance) {
+    function getBalances(
+        address account
+    )
+        public
+        view
+        returns (
+            uint256 priceTokenBalance,
+            uint256 yesTokenBalance,
+            uint256 noTokenBalance
+        )
+    {
         priceTokenBalance = priceToken.balanceOf(account);
         yesTokenBalance = yesToken.balanceOf(account, market.id);
         noTokenBalance = noToken.balanceOf(account, market.id);
