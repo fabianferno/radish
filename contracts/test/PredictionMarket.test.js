@@ -148,17 +148,17 @@ describe("Prediction Market System", function () {
     });
 
     it("Should allow market contract to mint YES tokens", async function () {
-      const { market, priceToken, user1 } = await loadFixture(
+      const { market, priceToken, user2 } = await loadFixture(
         deployContractsFixture
       );
       const amount = ethers.parseEther("10");
 
       await priceToken
-        .connect(user1)
+        .connect(user2)
         .approve(await market.getAddress(), ethers.parseEther("1000"));
 
       // This internally calls the YES token mint function
-      await expect(market.connect(user1).buy(true, amount)).to.not.be.reverted;
+      await expect(market.connect(user2).buy(true, amount)).to.not.be.reverted;
     });
 
     it("Should allow market contract to mint NO tokens", async function () {

@@ -23,16 +23,10 @@ contract RadishCore is Ownable {
     );
 
     constructor(
-        address _priceToken,
-        address _yesToken,
-        address _noToken
+        address _priceToken
     ) Ownable(msg.sender) {
         marketCount = 0;
         priceToken = _priceToken;
-        yesToken = _yesToken;
-        noToken = _noToken;
-        yesTokenContract = YesToken(_yesToken);
-        noTokenContract = NoToken(_noToken);
     }
 
     function setPriceToken(address _priceToken) public onlyOwner {
@@ -45,6 +39,7 @@ contract RadishCore is Ownable {
 
     function setYesToken(address _yesToken) public onlyOwner {
         yesToken = _yesToken;
+        yesTokenContract = YesToken(_yesToken);
     }
 
     function getYesToken() public view returns (address) {
@@ -53,6 +48,7 @@ contract RadishCore is Ownable {
 
     function setNoToken(address _noToken) public onlyOwner {
         noToken = _noToken;
+        noTokenContract = NoToken(_noToken);
     }
 
     function getNoToken() public view returns (address) {

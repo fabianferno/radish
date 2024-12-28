@@ -319,7 +319,7 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
     }
 
     // Emergency function to add liquidity if needed
-    function addLiquidity(uint256 amount) external onlyOwner marketActive {
+    function addLiquidity(uint256 amount) external  marketActive {
         yesToken.mint(address(this), market.id, amount, "");
         noToken.mint(address(this), market.id, amount, "");
         // Note: This should rarely/never be needed due to LMSR mechanics
