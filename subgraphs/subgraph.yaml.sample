@@ -1,0 +1,30 @@
+specVersion: 0.0.5
+schema:
+  file: ../schema.graphql
+dataSources:
+  - kind: ethereum
+    name: RadishCore
+    network: optimism-sepolia
+    source:
+      address: "0x19007A71a4c073a73711Ed8EE19c163b777F3eCf"
+      abi: RadishCore
+      startBlock: 7000000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Market
+        - Position
+        - User
+        - MarketTransaction
+        - TokenPrice
+      abis:
+        - name: RadishCore
+          file: ../../contracts/artifacts/contracts/RadishCore.sol/RadishCore.json
+        - name: PredictionMarket
+          file: ../../contracts/artifacts/contracts/PredictionMarket.sol/PredictionMarket.json
+      eventHandlers:
+        - event: MarketCreated(uint256,string,uint256,address)
+          handler: handleMarketCreated
+      file: ./src/mapping.ts

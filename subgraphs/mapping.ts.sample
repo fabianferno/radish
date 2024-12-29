@@ -1,0 +1,112 @@
+import { BigInt, BigDecimal, Bytes } from "@graphprotocol/graph-ts";
+import {
+  MarketCreated as MarketCreatedEvent,
+  RadishCore,
+} from "../generated/RadishCore/RadishCore";
+import { PredictionMarket } from "../generated/templates/PredictionMarket/PredictionMarket";
+import {
+  Market,
+  User,
+  Position,
+  MarketTransaction,
+  TokenPrice,
+} from "../generated/schema";
+
+export function handleMarketCreated(event: MarketCreatedEvent): void {
+  let market = new Market(event.params.id.toString());
+  let predictionMarket = PredictionMarket.bind(event.params.marketContract);
+
+  market.question = event.params.question;
+  market.endTime = event.params.endTime;
+  market.totalStaked = BigInt.fromI32(0);
+  market.totalYes = BigInt.fromI32(0);
+  market.totalNo = BigInt.fromI32(0);
+  market.resolved = false;
+  market.won = false;
+  market.totalPriceToken = BigInt.fromI32(0);
+  market.yesPrice = BigDecimal.fromString("0.5");
+  market.noPrice = BigDecimal.fromString("0.5");
+  market.creator = event.transaction.from;
+  market.createdAt = event.block.timestamp;
+  market.marketContract = event.params.marketContract;
+
+  market.save();
+
+  // Create initial token price entry
+  let tokenPrice = new TokenPrice(
+    event.transaction.hash.toHexString() + "-" + event.logIndex.toString()
+  );
+  tokenPrice.market = market.id;
+  tokenPrice.yesPrice = BigDecimal.fromString("0.5");
+  tokenPrice.noPrice = BigDecimal.fromString("0.5");
+  tokenPrice.timestamp = event.block.timestamp;
+  tokenPrice.save();
+}
+
+export function handleTokenOperation(
+  marketId: string,
+  user: Bytes,
+  operationType: i32,
+  tokenType: i32,
+  amount: BigInt,
+  timestamp: BigInt,
+  txHash: Bytes
+): void {
+  let userId = user.toHexString();
+  let userEntity = User.load(userId);
+  if (!userEntity) {
+    userEntity = new User(userId);
+    userEntity.save();
+  }
+
+  let positionId = marketId + "-" + userId;
+  let position = Position.load(positionId);
+  if (!position) {
+    position = new Position(positionId);
+    position.market = marketId;
+    position.user = userId;
+    position.yesAmount = BigInt.fromI32(0);
+    position.noAmount = BigInt.fromI32(0);
+  }
+
+  if (tokenType == 1) {
+    // YES token
+    if (operationType == 1) {
+      // Buy
+      position.yesAmount = position.yesAmount.plus(amount);
+    } else {
+      // Sell
+      position.yesAmount = position.yesAmount.minus(amount);
+    }
+  } else {
+    // NO token
+    if (operationType == 1) {
+      // Buy
+      position.noAmount = position.noAmount.plus(amount);
+    } else {
+      // Sell
+      position.noAmount = position.noAmount.minus(amount);
+    }
+  }
+
+  position.updatedAt = timestamp;
+  position.save();
+
+  let txId =
+    txHash.toHexString() +
+    "-" +
+    marketId +
+    "-" +
+    operationType.toString() +
+    "-" +
+    tokenType.toString();
+  let transaction = new MarketTransaction(txId);
+  transaction.market = marketId;
+  transaction.user = userId;
+  transaction.operationType = operationType;
+  transaction.tokenType = tokenType;
+  transaction.amount = amount;
+  transaction.timestamp = timestamp;
+  transaction.transactionHash = txHash;
+  transaction.save();
+}
