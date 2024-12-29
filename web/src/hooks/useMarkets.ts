@@ -59,6 +59,22 @@ export const mockMarkets: Market[] = [
     volume24h: 32000,
     isOnChain: false,
   },
+  {
+    id: "mock-3",
+    title: "Will Khaby Lame hit 200M TikTok followers by May 2024?",
+    description: "Prediction market for Khaby Lame's TikTok follower growth",
+    endDate: "2024-05-31",
+    creatorHandle: "@khabylame",
+    platform: "tiktok",
+    metric: "followers",
+    target: 200000000,
+    currentMetric: 162000000,
+    yesPrice: 0.45,
+    noPrice: 0.55,
+    liquidity: 120000,
+    volume24h: 28000,
+    isOnChain: false,
+  },
 ];
 
 export function useMarkets() {
