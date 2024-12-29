@@ -91,7 +91,7 @@ export default function MarketPage() {
     return (
         <Layout>
             <div className="flex justify-between items-center mb-8 border-b border-zinc-700 pb-8">
-                <h1 className="text-6xl font-semibold text-black">{market.title}</h1>
+                <h1 className="text-5xl font-semibold text-black w-2/3">{market.title}</h1>
                 <div className="text-right space-y-4">
                     {market.creatorHandle && (
                         <div className="text-3xl font-semibold text-white">
@@ -103,7 +103,7 @@ export default function MarketPage() {
                             Target: {(market.target / 1000000).toFixed(1)}M
                         </div>
                     )}
-                    <div className="flex justify-end">
+                    <div className="justify-end">
                         <CustomConnectButton dark />
                     </div>
                 </div>
