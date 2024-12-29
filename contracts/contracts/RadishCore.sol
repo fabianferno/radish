@@ -20,7 +20,10 @@ contract RadishCore is Ownable {
         uint256 id,
         string question,
         uint256 endTime,
-        address marketContract
+        address marketContract,
+        address priceToken,
+        address yesToken,
+        address noToken
     );
 
     constructor(
@@ -69,6 +72,6 @@ contract RadishCore is Ownable {
 
         marketCount++;
 
-        emit MarketCreated(marketCount, _question, _endtime, address(market));
+        emit MarketCreated(marketCount, _question, _endtime, address(market) , priceToken, yesToken, noToken);
     }
 }
