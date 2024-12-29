@@ -18,19 +18,19 @@ interface Prediction {
 // Mock data - replace with actual data fetching
 const mockPredictions: Prediction[] = [
     {
-        marketId: "1",
-        marketTitle: "Will Bitcoin reach $100k by end of 2024?",
+        marketId: "mock-1",
+        marketTitle: "Will MrBeast reach 200M YouTube subscribers by March 2024?",
         prediction: 0.75,
         timestamp: "2023-12-24 10:30",
-        endDate: "2024-12-31",
+        endDate: "2024-03-31",
         currentProbability: 0.65,
     },
     {
-        marketId: "2",
-        marketTitle: "Will AI surpass human-level reasoning by 2025?",
+        marketId: "mock-2",
+        marketTitle: "Will Elon Musk reach 170M Twitter followers by Q2 2024?",
         prediction: 0.32,
         timestamp: "2023-12-23 15:45",
-        endDate: "2025-12-31",
+        endDate: "2024-06-30",
         currentProbability: 0.45,
     },
 ]
@@ -40,9 +40,23 @@ export default function MyPredictionsPage() {
         <Layout>
             <div className="flex justify-between items-center mb-8 border-b border-gray-200 pb-8">
                 <h1 className="text-6xl font-semibold">Your positions</h1>
-                <h3 className="text-3xl font-semibold">
-                    Track your bets and earnings 💰
-                </h3>
+                <div className="flex flex-col items-end gap-4">
+                    <h3 className="text-3xl font-semibold">
+                        Track your bets and earnings 💰
+                    </h3>
+                    <div className="flex items-center gap-4">
+                        <div>Your total earnings: $1,234</div>
+                        <button
+                            className="bg-neo-green hover:bg-neo-green/80 text-black font-bold py-2 px-6 rounded-lg transition-colors"
+                            onClick={() => {
+                                // TODO: Implement claim winnings functionality
+                                console.log("Claiming winnings...");
+                            }}
+                        >
+                            Claim Winnings 🎉
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <Masonry

@@ -21,13 +21,13 @@ export default function Layout({
 }>) {
     return (
         <div className="min-h-screen bg-white">
-            <header className="bg-black text-white">
+            <header className="bg-black text-white py-2">
                 <div className="container mx-auto py-4">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <Link href="/markets">
                                 <h1 className="font-bold text-3xl flex items-center gap-2 mr-5">
-                                    <span className="text-neo-green">😤</span>
+                                    <span className="text-neo-green">🚀📈</span>
                                     <span className="text-neo-green">radish.xyz</span>
                                 </h1>
                             </Link>
@@ -66,7 +66,7 @@ export default function Layout({
                                 <NeoXLogo />
                             </div>
                             <p className="text-gray-400">
-                                Prediction markets for creator milestones, powered by Optimism.
+                                Prediction markets for creators and their fans, earn rewards for betting on your favorite creators.
                             </p>
                         </div>
                         <div>

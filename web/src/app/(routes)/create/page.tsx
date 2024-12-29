@@ -49,7 +49,7 @@ export default function CreateMarketPage() {
 
     return (
         <Layout>
-            <Card className="max-w-2xl mx-auto shadow-xl">
+            <Card className="border-none max-w-6xl bg-zinc-100 mx-auto  mt-5 shadow-[0px_27.5px_40px_-17.5px_rgb(0_0_0_/_30%),_46.2px_37.5px_40px_-17.5px_rgb(0_0_0_/_20%)] ">
                 <form onSubmit={handleSubmit} className="space-y-8 p-6">
                     <div>
                         <h1 className="notebook-header">📝 Create New Prediction Market</h1>
@@ -63,6 +63,7 @@ export default function CreateMarketPage() {
                             <Label htmlFor="title">Market Question</Label>
                             <Input
                                 id="title"
+                                className="border-none"
                                 placeholder="e.g., Will Bitcoin reach $100k by end of 2024?"
                                 value={formData.title}
                                 onChange={(e) =>
@@ -76,6 +77,7 @@ export default function CreateMarketPage() {
                             <Label htmlFor="description">Description</Label>
                             <Textarea
                                 id="description"
+                                className="border-none"
                                 placeholder="Provide additional context and details about the prediction market..."
                                 value={formData.description}
                                 onChange={(e) =>
@@ -90,6 +92,7 @@ export default function CreateMarketPage() {
                             <Input
                                 id="endDate"
                                 type="date"
+                                className="border-none"
                                 value={formData.endDate}
                                 onChange={(e) =>
                                     setFormData({ ...formData, endDate: e.target.value })
