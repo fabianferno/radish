@@ -6,37 +6,48 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("Prediction Market System", function () {
+  const overrides = {
+    gasLimit: 8000000,
+  };
+
   async function deployContractsFixture() {
     const [owner, user1, user2] = await ethers.getSigners();
 
     // Deploy tokens first
     const PriceToken = await ethers.getContractFactory("MockERC20");
-    const priceToken = await PriceToken.deploy("Price Token", "PT");
+    const priceToken = await PriceToken.deploy("Price Token", "PT", overrides);
 
     // Deploy token contracts with owner as initial owner
     const YesToken = await ethers.getContractFactory("YesToken");
-    const yesToken = await YesToken.deploy(owner.address);
+    const yesToken = await YesToken.deploy(owner.address, overrides);
 
     const NoToken = await ethers.getContractFactory("NoToken");
-    const noToken = await NoToken.deploy(owner.address);
+    const noToken = await NoToken.deploy(owner.address, overrides);
 
     // Deploy factory
     const MarketFactory = await ethers.getContractFactory("RadishCore");
     const marketFactory = await MarketFactory.deploy(
       await priceToken.getAddress(),
       await yesToken.getAddress(),
-      await noToken.getAddress()
+      await noToken.getAddress(),
+      overrides
     );
 
     // Transfer ownership of token contracts to the factory
-    await yesToken.transferOwnership(await marketFactory.getAddress());
-    await noToken.transferOwnership(await marketFactory.getAddress());
+    await yesToken.transferOwnership(
+      await marketFactory.getAddress(),
+      overrides
+    );
+    await noToken.transferOwnership(
+      await marketFactory.getAddress(),
+      overrides
+    );
 
     // Create a test market
     const question = "Will BTC reach $150k in 2024?";
     const endTime = Math.floor(Date.now() / 1000) + 86400; // 24 hours from now
 
-    await marketFactory.createMarket(question, endTime);
+    await marketFactory.createMarket(question, endTime, overrides);
 
     // Get the created market's address from events
     const filter = marketFactory.filters.MarketCreated();
@@ -52,8 +63,8 @@ describe("Prediction Market System", function () {
 
     // Mint some price tokens for testing
     const mintAmount = ethers.parseEther("1000");
-    await priceToken.mint(user1.address, mintAmount);
-    await priceToken.mint(user2.address, mintAmount);
+    await priceToken.mint(user1.address, mintAmount, overrides);
+    await priceToken.mint(user2.address, mintAmount, overrides);
 
     return {
       marketFactory,
@@ -201,7 +212,8 @@ describe("Prediction Market System", function () {
       const currentCount = await marketFactory.marketCount();
       const tx = await marketFactory.createMarket(
         "New Question",
-        endTime + 1000
+        endTime + 1000,
+        overrides
       );
       const receipt = await tx.wait();
 
@@ -242,11 +254,15 @@ describe("Prediction Market System", function () {
         const amount = ethers.parseEther("10");
         await priceToken
           .connect(user1)
-          .approve(await market.getAddress(), ethers.parseEther("1000"));
+          .approve(
+            await market.getAddress(),
+            ethers.parseEther("1000"),
+            overrides
+          );
 
-        await expect(market.connect(user1).buy(true, amount))
-          .to.emit(market, "TokensPurchased")
-          .withArgs(user1.address, 1n, amount);
+        await expect(market.connect(user1).buy(true, amount, overrides))
+          .to.emit(market, "TokenOperation")
+          .withArgs(user1.address, 1, 1, amount);
       });
 
       it("Should allow buying NO tokens", async function () {
@@ -257,11 +273,15 @@ describe("Prediction Market System", function () {
         const amount = ethers.parseEther("10");
         await priceToken
           .connect(user1)
-          .approve(await market.getAddress(), ethers.parseEther("1000"));
+          .approve(
+            await market.getAddress(),
+            ethers.parseEther("1000"),
+            overrides
+          );
 
-        await expect(market.connect(user1).buy(false, amount))
-          .to.emit(market, "TokensPurchased")
-          .withArgs(user1.address, 2n, amount);
+        await expect(market.connect(user1).buy(false, amount, overrides))
+          .to.emit(market, "TokenOperation")
+          .withArgs(user1.address, 1, 2, amount);
       });
 
       it("Should calculate correct token prices", async function () {
@@ -272,10 +292,14 @@ describe("Prediction Market System", function () {
         const amount = ethers.parseEther("10");
         await priceToken
           .connect(user1)
-          .approve(await market.getAddress(), ethers.parseEther("1000"));
+          .approve(
+            await market.getAddress(),
+            ethers.parseEther("1000"),
+            overrides
+          );
 
         // Buy some YES tokens to change the price
-        await market.connect(user1).buy(true, amount);
+        await market.connect(user1).buy(true, amount, overrides);
 
         const yesPrice = await market.getTokenPrice(true);
         const noPrice = await market.getTokenPrice(false);
@@ -300,36 +324,66 @@ describe("Prediction Market System", function () {
 
         await priceToken
           .connect(user1)
-          .approve(await market.getAddress(), ethers.parseEther("1000"));
+          .approve(
+            await market.getAddress(),
+            ethers.parseEther("1000"),
+            overrides
+          );
         await priceToken
           .connect(user2)
-          .approve(await market.getAddress(), ethers.parseEther("1000"));
+          .approve(
+            await market.getAddress(),
+            ethers.parseEther("1000"),
+            overrides
+          );
 
         // User1 buys YES tokens
-        await market.connect(user1).buy(true, amount);
+        await market.connect(user1).buy(true, amount, overrides);
 
         // User2 buys NO tokens with less amount
-        await market.connect(user2).buy(false, halfAmount);
+        await market.connect(user2).buy(false, halfAmount, overrides);
 
         // Fast forward time
         await time.increase(86401); // 24 hours + 1 second
 
-        // Create a signer for the resolver address
-        const resolverSigner = await ethers.getImpersonatedSigner(
-          "0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2"
-        );
+        // Get the owner (who is also the resolver) to resolve the market
+        const owner = await market.owner();
+        const ownerSigner = await ethers.getSigner(owner);
 
-        // Fund the resolver with some ETH for gas
-        await ethers.provider.send("hardhat_setBalance", [
-          await resolverSigner.getAddress(),
-          "0x1000000000000000000", // 1 ETH
-        ]);
-
-        await market.connect(resolverSigner).resolve();
+        await market.connect(ownerSigner).resolve(overrides);
 
         const state = await market.getMarketState();
         expect(state.resolved).to.be.true;
         expect(state.won).to.be.true; // YES should win as it has more tokens
+      });
+
+      it("Should not allow non-resolver to resolve market", async function () {
+        const { market, user1 } = await loadFixture(deployContractsFixture);
+
+        // Fast forward time
+        await time.increase(86401);
+
+        // Try to resolve with non-resolver account
+        await expect(
+          market.connect(user1).resolve(overrides)
+        ).to.be.revertedWith("Only resolver can call this function");
+      });
+
+      it("Should allow owner to change resolver", async function () {
+        const { market, user1 } = await loadFixture(deployContractsFixture);
+        const owner = await market.owner();
+        const ownerSigner = await ethers.getSigner(owner);
+
+        await market.connect(ownerSigner).setResolver(user1.address, overrides);
+        expect(await market.resolver()).to.equal(user1.address);
+
+        // Fast forward time
+        await time.increase(86401);
+
+        // New resolver should be able to resolve the market
+        await market.connect(user1).resolve(overrides);
+        const state = await market.getMarketState();
+        expect(state.resolved).to.be.true;
       });
     });
   });

@@ -12,7 +12,7 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
     IERC20 public priceToken;
     YesToken public yesToken;
     NoToken public noToken;
-    address resolver = 0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2;
+    address public resolver;
 
     struct Market {
         uint256 id; // unique identifier for the market
@@ -29,24 +29,24 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
     Market public market;
 
     // Constants for liquidity calculations
-    UD60x18 public DECIMALS = ud(1000000000000000000);
-    UD60x18 public LIQUIDITY_PARAMETER = ud(10000000000000000000);
-    uint256 public constant INITIAL_LIQUIDITY = 1000 * 10 ** 18; // 1000 tokens of each type
+    uint256 private constant INITIAL_LIQUIDITY = 1000e18; // 1000 tokens of each type
+    UD60x18 private immutable DECIMALS;
+    UD60x18 private immutable LIQUIDITY_PARAMETER;
 
     // Market state variables
     UD60x18 public qYes = ud(0); // YES token quantity
     UD60x18 public qNo = ud(0); // NO token quantity
 
     event LiquidityAdded(address indexed provider, uint256 amount);
-    event TokensPurchased(
-        address indexed buyer,
-        uint256 tokentype,
-        uint256 amount
-    );
-    event TokensSold(address indexed seller, uint256 tokentype, uint256 amount);
-    event yesTokenbalance(uint256 balance);
     event MarketResolved(uint256 marketId, bool result);
     event RewardClaimed(address indexed user, uint256 amount);
+
+    event TokenOperation(
+        address indexed user,
+        uint8 opType, // 1: buy, 2: sell
+        uint8 tokenType, // 1: yes, 2: no
+        uint256 amount
+    );
 
     constructor(
         address _priceToken,
@@ -54,11 +54,15 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
         address _noToken,
         uint256 _marketId,
         string memory _question,
-        uint256 _endtime
-    ) Ownable(0xe5CaA785FEe2154E5cddc15aC37eEDf0274ad5A2) {
+        uint256 _endtime,
+        address _creator
+    ) Ownable(_creator) {
+        DECIMALS = ud(1e18);
+        LIQUIDITY_PARAMETER = ud(10e18);
         priceToken = IERC20(_priceToken);
         yesToken = YesToken(_yesToken);
         noToken = NoToken(_noToken);
+        resolver = _creator;
         market = Market({
             id: _marketId,
             question: _question,
@@ -237,7 +241,7 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
             );
         }
 
-        emit TokensPurchased(msg.sender, isYesToken ? 1 : 2, amount.unwrap());
+        emit TokenOperation(msg.sender, 1, isYesToken ? 1 : 2, amount.unwrap());
     }
 
     function sell(bool isYesToken, UD60x18 amount) public marketActive {
@@ -294,7 +298,7 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
             "Return payment failed"
         );
 
-        emit TokensSold(msg.sender, isYesToken ? 1 : 2, amount.unwrap());
+        emit TokenOperation(msg.sender, 2, isYesToken ? 1 : 2, amount.unwrap());
     }
 
     function claimReward() public {
@@ -389,5 +393,10 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
         priceTokenBalance = priceToken.balanceOf(account);
         yesTokenBalance = yesToken.balanceOf(account, market.id);
         noTokenBalance = noToken.balanceOf(account, market.id);
+    }
+
+    function setResolver(address newResolver) public onlyOwner {
+        require(newResolver != address(0), "Invalid resolver address");
+        resolver = newResolver;
     }
 }

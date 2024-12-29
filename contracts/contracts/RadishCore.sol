@@ -12,6 +12,7 @@ contract RadishCore is Ownable {
     address public priceToken;
     address public yesToken;
     address public noToken;
+
     YesToken public yesTokenContract;
     NoToken public noTokenContract;
 
@@ -39,24 +40,12 @@ contract RadishCore is Ownable {
         priceToken = _priceToken;
     }
 
-    function getPriceToken() public view returns (address) {
-        return priceToken;
-    }
-
     function setYesToken(address _yesToken) public onlyOwner {
         yesToken = _yesToken;
     }
 
-    function getYesToken() public view returns (address) {
-        return yesToken;
-    }
-
     function setNoToken(address _noToken) public onlyOwner {
         noToken = _noToken;
-    }
-
-    function getNoToken() public view returns (address) {
-        return noToken;
     }
 
     function createMarket(string memory _question, uint256 _endtime) public {
@@ -67,7 +56,8 @@ contract RadishCore is Ownable {
             noToken,
             marketCount,
             _question,
-            _endtime
+            _endtime,
+            msg.sender
         );
 
         // Register the market with the token contracts
