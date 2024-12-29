@@ -1,0 +1,8 @@
+{
+  "optimism-sepolia": {
+    "RadishCore": {
+      "address": "0x19007A71a4c073a73711Ed8EE19c163b777F3eCf",
+      "startBlock": 21834598
+    }
+  }
+}
