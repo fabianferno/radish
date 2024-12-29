@@ -2,8 +2,8 @@ type Market @entity {
   id: ID! # Unique identifier for the market
   question: String! # Market question
   endTime: BigInt! # Market end time (timestamp)
-  marketContract: String! # Market contract address
-  creator: User! # Relation to User
+  marketContract: Bytes! # Market contract address
+  creator: Bytes! # Relation to User
   totalStaked: BigInt! # Total staked in the market
   totalYes: BigInt! # Total YES tokens staked
   totalNo: BigInt! # Total NO tokens staked
@@ -33,8 +33,9 @@ type UserMarket @entity {
   noBought: BigInt! # Total NO tokens bought in this market
   yesSold: BigInt! # Total YES tokens sold in this market
   noSold: BigInt! # Total NO tokens sold in this market
+  yesInMarket: BigInt! # Total yes tokens  in this market
+  noInMarket: BigInt! # Total no tokens  in this market
   spent: BigInt! # Total price tokens spent in this market
-  received: BigInt! # Total price tokens received in this market
-  rewardsClaimed: BigInt! # Total rewards claimed in this market
+  rewards: BigInt! # Total price tokens rewarded in this market
   stand: String! # User's final stand (e.g., "YES" or "NO")
 }
