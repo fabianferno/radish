@@ -37,16 +37,41 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
     UD60x18 public qYes = ud(0); // YES token quantity
     UD60x18 public qNo = ud(0); // NO token quantity
 
-    event LiquidityAdded(address indexed provider, uint256 amount);
-    event MarketResolved(uint256 marketId, bool result);
-    event RewardClaimed(address indexed user, uint256 amount);
+
+    event LiquidityAdded(
+    address indexed provider,
+    uint256 indexed marketId,
+    uint256 amount
+);
+
+   event MarketResolved(
+    uint256 indexed marketId,
+    bool result, // true for YES, false for NO
+    uint256 totalPriceToken
+);
+event RewardClaimed(
+    address indexed user,
+    uint256 indexed marketId,
+    uint256 rewardAmount
+);
+
 
     event TokenOperation(
         address indexed user,
+        uint256 indexed marketId,
         uint8 opType, // 1: buy, 2: sell
         uint8 tokenType, // 1: yes, 2: no
-        uint256 amount
+        uint256 amount,
+        uint256 cost
     );
+
+
+    event EmergencyLiquidityAdded(
+    address indexed owner,
+    uint256 indexed marketId,
+    uint256 amount
+);
+
 
     constructor(
         address _priceToken,
@@ -133,7 +158,7 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
         market.won = market.totalYes > market.totalNo;
         market.totalPriceToken = priceToken.balanceOf(address(this));
 
-        emit MarketResolved(market.id, market.won);
+        emit MarketResolved(market.id, market.won , market.totalPriceToken);
     }
 
     /**
@@ -241,7 +266,7 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
             );
         }
 
-        emit TokenOperation(msg.sender, 1, isYesToken ? 1 : 2, amount.unwrap());
+        emit TokenOperation(msg.sender, market.id, 1, isYesToken ? 1 : 2, amount.unwrap(),cost.unwrap());
     }
 
     function sell(bool isYesToken, UD60x18 amount) public marketActive {
@@ -298,7 +323,7 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
             "Return payment failed"
         );
 
-        emit TokenOperation(msg.sender, 2, isYesToken ? 1 : 2, amount.unwrap());
+        emit TokenOperation(msg.sender,market.id, 2, isYesToken ? 1 : 2, amount.unwrap(),returnAmount.unwrap());
     }
 
     function claimReward() public {
@@ -319,7 +344,7 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
 
         require(priceToken.transfer(msg.sender, reward), "Payment failed");
 
-        emit RewardClaimed(msg.sender, reward);
+        emit RewardClaimed(msg.sender, market.id,reward);
     }
 
     // Emergency function to add liquidity if needed
@@ -327,6 +352,8 @@ contract PredictionMarket is Ownable, IERC1155Receiver {
         yesToken.mint(address(this), market.id, amount, "");
         noToken.mint(address(this), market.id, amount, "");
         // Note: This should rarely/never be needed due to LMSR mechanics
+
+        emit EmergencyLiquidityAdded(msg.sender, market.id, amount);
     }
 
     /**
