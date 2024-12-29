@@ -3,6 +3,9 @@
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import Layout from "@/components/layouts/MainLayout"
+import Masonry from 'react-masonry-css'
+import { motion } from "framer-motion"
+
 interface Prediction {
     marketId: string
     marketTitle: string
@@ -35,47 +38,84 @@ const mockPredictions: Prediction[] = [
 export default function MyPredictionsPage() {
     return (
         <Layout>
-            <div className="">
-                <h1 className="notebook-header mb-8">📈 My Predictions</h1>
+            <div className="flex justify-between items-center mb-8 border-b border-gray-200 pb-8">
+                <h1 className="text-6xl font-semibold">Your positions</h1>
+                <h3 className="text-3xl font-semibold">
+                    Track your bets and earnings 💰
+                </h3>
+            </div>
 
-                <div className="grid gap-6">
-                    {mockPredictions.map((pred) => (
-                        <Link key={pred.marketId} href={`/markets/${pred.marketId}`}>
-                            <Card className="prediction-card">
-                                <h2 className="text-xl font-semibold mb-2">{pred.marketTitle}</h2>
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <span className="font-medium">Your Prediction:</span>{" "}
+            <Masonry
+                breakpointCols={{
+                    default: 3,
+                    1100: 3,
+                    700: 1,
+                    500: 1,
+                }}
+                className="my-masonry-grid"
+                columnClassName="my-masonry-grid_column p-wall-tilt"
+            >
+                {mockPredictions.map((pred) => (
+                    <Link key={pred.marketId} href={`/markets/${pred.marketId}`} className="h-full">
+                        <motion.div
+                            whileHover={{
+                                y: 10,
+                                x: 10,
+                                filter: 'invert(1) hue-rotate(20deg)',
+                            }}
+                            className="p-shadow p-6 w-full h-full flex flex-col items-center rounded bg-black text-white"
+                        >
+                            <h2 className="text-xl font-semibold mb-4">{pred.marketTitle}</h2>
+
+                            <div className="grid grid-cols-2 gap-4 mb-4 mt-auto w-full">
+                                <div className="bg-green-500/20 p-3">
+                                    <div className="text-sm font-medium">Your Prediction</div>
+                                    <div className="text-lg font-bold text-green-700">
                                         {(pred.prediction * 100).toFixed(1)}%
                                     </div>
-                                    <div>
-                                        <span className="font-medium">Current Market:</span>{" "}
+                                </div>
+                                <div className="bg-blue-500/20 p-3">
+                                    <div className="text-sm font-medium">Current Market</div>
+                                    <div className="text-lg font-bold text-blue-700">
                                         {(pred.currentProbability * 100).toFixed(1)}%
                                     </div>
-                                    <div>
-                                        <span className="font-medium">Predicted On:</span>{" "}
-                                        {pred.timestamp}
-                                    </div>
-                                    <div>
-                                        <span className="font-medium">Resolves On:</span> {pred.endDate}
-                                    </div>
                                 </div>
-                            </Card>
-                        </Link>
-                    ))}
-                </div>
+                            </div>
 
-                {mockPredictions.length === 0 && (
-                    <div className="text-center text-muted-foreground mt-8">
-                        <p>You haven&apos;t made any predictions yet.</p>
-                        <Link href="/markets">
-                            <span className="text-primary hover:underline">
-                                Browse available markets
-                            </span>
-                        </Link>
-                    </div>
-                )}
-            </div>
+                            <div className="grid grid-cols-2 gap-4 text-sm mb-4 w-full">
+                                <div>
+                                    <span className="font-medium">Predicted On:</span>{" "}
+                                    {pred.timestamp}
+                                </div>
+                                <div>
+                                    <span className="font-medium">Resolves On:</span>{" "}
+                                    {pred.endDate}
+                                </div>
+                            </div>
+
+                            <div className="flex w-full justify-between text-sm border-t pt-4 border-zinc-700">
+                                <div>
+                                    <span className="font-medium">P/L:</span>{" "}
+                                    +$1,234
+                                </div>
+                                <div>
+                                    <span className="font-medium">Position:</span>{" "}
+                                    $5,000
+                                </div>
+                            </div>
+                        </motion.div>
+                    </Link>
+                ))}
+            </Masonry>
+
+            {mockPredictions.length === 0 && (
+                <div className="text-center text-muted-foreground mt-8">
+                    <p>You haven&apos;t made any predictions yet.</p>
+                    <Link href="/markets" className="text-primary hover:underline">
+                        Browse available markets
+                    </Link>
+                </div>
+            )}
         </Layout>
     )
 } 

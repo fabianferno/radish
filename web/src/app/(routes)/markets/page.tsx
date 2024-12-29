@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import Layout from "@/components/layouts/MainLayout"
+import Masonry from 'react-masonry-css'
+import { motion } from "framer-motion"
 
 interface Market {
     id: string
@@ -67,24 +69,47 @@ const PlatformIcon = ({ platform }: { platform: Market["platform"] }) => {
 export default function MarketsPage() {
     return (
         <Layout>
-            <div className="grid gap-6">
+            <div className="flex justify-between items-center mb-8 border-b border-gray-200 pb-8">
+                <h1 className="text-6xl font-semibold">Rad or Not?</h1>
+                <h3 className="text-3xl font-semibold">
+                    Bet on your favorite creators and earn 💸
+                </h3>
+            </div>
+
+            <Masonry
+                breakpointCols={{
+                    default: 3,
+                    1100: 3,
+                    700: 1,
+                    500: 1,
+                }}
+                className="my-masonry-grid"
+                columnClassName="my-masonry-grid_column p-wall-tilt"
+            >
                 {mockMarkets.map((market) => (
-                    <Link key={market.id} href={`/markets/${market.id}`}>
-                        <Card className="prediction-card shadow-xl p-6">
+                    <Link key={market.id} href={`/markets/${market.id}`} className="h-full">
+                        <motion.div
+                            whileHover={{
+                                y: 10,
+                                x: 10,
+                                filter: 'invert(1) hue-rotate(20deg)',
+                            }}
+                            className="p-shadow p-6 w-full h-full flex flex-col items-center rounded bg-black text-white"
+                        >
                             <div className="flex items-center mb-2">
                                 <PlatformIcon platform={market.platform} />
                                 <h2 className="text-xl font-semibold">{market.title}</h2>
                             </div>
-                            <p className="text-muted-foreground mb-4">{market.description}</p>
+                            <p className="mb-4 font-light text-zinc-400">{market.description}</p>
 
-                            <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div className="bg-green-50 p-3 rounded-lg">
+                            <div className="grid grid-cols-2 gap-4 mb-4 mt-auto w-full">
+                                <div className="bg-green-500/20 p-3">
                                     <div className="text-sm font-medium">YES Price</div>
                                     <div className="text-lg font-bold text-green-700">
                                         ${market.yesPrice.toFixed(3)}
                                     </div>
                                 </div>
-                                <div className="bg-red-50 p-3 rounded-lg">
+                                <div className="bg-red-500/20 p-3">
                                     <div className="text-sm font-medium">NO Price</div>
                                     <div className="text-lg font-bold text-red-700">
                                         ${market.noPrice.toFixed(3)}
@@ -111,7 +136,7 @@ export default function MarketsPage() {
                                 </div>
                             </div>
 
-                            <div className="flex justify-between text-sm border-t pt-4">
+                            <div className="flex w-full justify-between text-sm border-t pt-4 border-zinc-700">
                                 <div>
                                     <span className="font-medium">24h Volume:</span>{" "}
                                     ${market.volume24h.toLocaleString()}
@@ -121,10 +146,10 @@ export default function MarketsPage() {
                                     ${market.liquidity.toLocaleString()}
                                 </div>
                             </div>
-                        </Card>
+                        </motion.div>
                     </Link>
                 ))}
-            </div>
+            </Masonry>
         </Layout>
     )
 } 

@@ -5,30 +5,38 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CustomConnectButton } from "@/components/ui/CustomConnectButton";
 
-
 export default function Layout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    return <main className="container mx-auto py-8">
-        <div className="flex justify-between items-center mb-8">
-            <Link href="/markets">
-                <h1 className="notebook-header font-bold text-3xl flex items-center gap-2">
-                    <Image src="/logo.png" className="rounded-full w-20 h-20 -m-3" alt="radish" width={50} height={50} />
-                    radish.xyz
-                </h1>
-            </Link>
-            <div className="flex flex-row items-center gap-2">
-                <Link href="/create">
-                    <Button>Create Market</Button>
-                </Link>
-                <CustomConnectButton />
-            </div>
-        </div>
+    return (
+        <div className="min-h-screen bg-white">
+            <header className="bg-black text-white">
+                <div className="container mx-auto py-4">
+                    <div className="flex justify-between items-center">
+                        <Link href="/markets">
+                            <h1 className="font-bold text-2xl flex items-center gap-2">
+                                <span className="text-neo-green">😤</span>
+                                <span className="text-neo-green">radish.xyz</span>
+                            </h1>
+                        </Link>
+                        <nav className="flex items-center gap-8">
+                            <Link href="/markets">
+                                <span className="text-white hover:text-neo-green transition-colors">Markets</span>
+                            </Link>
+                            <Link href="/my-predictions">
+                                <span className="text-white hover:text-neo-green transition-colors">My Positions</span>
+                            </Link>
+                            <CustomConnectButton />
+                        </nav>
+                    </div>
+                </div>
+            </header>
 
-        <section className="container py-8">
-            {children}
-        </section>
-    </main>
+            <main className="container mx-auto py-8">
+                {children}
+            </main>
+        </div>
+    );
 }

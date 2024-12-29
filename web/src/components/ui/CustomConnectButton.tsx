@@ -38,7 +38,7 @@ export const CustomConnectButton = () => {
                                     <Button
                                         onClick={openConnectModal}
                                         variant="outline"
-                                        className="font-medium bg-yellow-100"
+                                        className="font-medium border-neo-green text-neo-green hover:bg-neo-green hover:text-black"
 
                                     >
                                         Connect Wallet

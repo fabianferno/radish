@@ -4,26 +4,26 @@
 
 @layer base {
   :root {
-    --background: 60 100% 99%;
+    --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --primary: 152 100% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 27% 9%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 97%;
+    --muted-foreground: 220 27% 9%;
+    --accent: 152 100% 45%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.25rem;
+    --border: 220 27% 9%;
+    --input: 220 27% 9%;
+    --ring: 152 100% 45%;
+    --radius: 0.75rem;
   }
 }
 
@@ -32,34 +32,80 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-    background-image: repeating-linear-gradient(
-      transparent,
-      transparent 31px,
-      theme(colors.blue.100/30) 31px,
-      theme(colors.blue.100/30) 32px
-    );
-    background-size: 100% 32px;
+    @apply bg-white text-secondary;
   }
 }
 
 @layer components {
   .notebook-card {
-    @apply bg-white rounded-sm border border-gray-200 shadow-sm;
-    background-image: repeating-linear-gradient(
-      transparent,
-      transparent 31px,
-      theme(colors.blue.100/30) 31px,
-      theme(colors.blue.100/30) 32px
-    );
-    background-size: 100% 32px;
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm;
   }
 
   .notebook-header {
-    @apply text-2xl font-semibold border-b-2 border-red-200 pb-2 mb-4;
+    @apply text-2xl font-semibold text-secondary pb-2 mb-4;
   }
 
   .prediction-card {
-    @apply p-6 mb-4 hover:shadow-md transition-shadow;
+    @apply bg-white p-6 mb-4 hover:shadow-lg transition-shadow rounded-lg border border-gray-100;
   }
+}
+
+/* Custom Styles */
+.gradient-text {
+  background: linear-gradient(90deg, #00e599 0%, #0d1321 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.my-masonry-grid {
+  display: -webkit-box; /* Not needed if autoprefixing */
+  display: -ms-flexbox; /* Not needed if autoprefixing */
+  display: flex;
+  margin-left: -30px; /* gutter size offset */
+  width: auto;
+}
+.my-masonry-grid_column {
+  padding-left: 30px; /* gutter size */
+  background-clip: padding-box;
+}
+
+/* Style your items */
+.my-masonry-grid_column > div {
+  /* change div to reference your elements you put in <Masonry> */
+  background: grey;
+  margin-bottom: 30px;
+}
+
+.p-shadow {
+  box-shadow: 0px 27.5px 40px -17.5px rgb(0 0 0 / 40%),
+    46.2px 37.5px 40px -17.5px rgb(0 0 0 / 40%);
+}
+
+.p-tilt {
+  transform: rotate(15deg) skew(344deg, 352deg) translate(-25px, 40px);
+}
+
+.p-wall-tilt {
+  transform: rotate3d(0.5, -0.866, 0, 20deg) rotateZ(-1deg);
+}
+
+html::-webkit-scrollbar {
+  width: 3px;
+  background: gray;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: white;
+  border-radius: 5px;
+}
+
+*::-webkit-scrollbar {
+  width: 3px;
+  background: gray;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: white;
+  border-radius: 5px;
 }

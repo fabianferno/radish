@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import dynamic from "next/dynamic"
 import Layout from "@/components/layouts/MainLayout"
+import { motion } from "framer-motion"
 
 // Dynamically import TradingView chart to avoid SSR issues
 const TradingViewWidget = dynamic(
@@ -72,120 +73,114 @@ export default function MarketPage() {
 
     return (
         <Layout>
-            <Card className="notebook-card mb-8">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle className="notebook-header">{mockMarket.title}</CardTitle>
-                            <p className="text-muted-foreground">{mockMarket.description}</p>
-                        </div>
-                        <div className="text-right">
-                            <div className="text-sm mb-1">
-                                <span className="font-medium">Creator:</span> {mockMarket.creatorHandle}
-                            </div>
-                            <div className="text-sm">
-                                <span className="font-medium">Current {mockMarket.metric}:</span>{" "}
-                                {(mockMarket.currentMetric / 1000000).toFixed(1)}M
-                            </div>
-                        </div>
+            <div className="flex justify-between items-center mb-8 border-b border-zinc-700 pb-8">
+                <h1 className="text-6xl font-semibold text-black">{mockMarket.title}</h1>
+                <div className="text-right">
+                    <div className="text-3xl font-semibold text-white">
+                        {mockMarket.creatorHandle}
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-3 gap-8">
-                        {/* Trading Chart */}
-                        <div className="col-span-2 bg-card rounded-lg p-4 h-[400px]">
-                            <TradingViewWidget
-                                marketId={`MRBEAST:SUBS_${mockMarket.id}`}
-                            />
-                        </div>
-
-                        {/* Trading Interface */}
-                        <div className="space-y-6">
-                            <Tabs value={activeTab} onValueChange={setActiveTab}>
-                                <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger
-                                        value="yes"
-                                        className="data-[state=active]:bg-green-100"
-                                    >
-                                        YES (${mockMarket.yesPrice.toFixed(3)})
-                                    </TabsTrigger>
-                                    <TabsTrigger
-                                        value="no"
-                                        className="data-[state=active]:bg-red-100"
-                                    >
-                                        NO (${mockMarket.noPrice.toFixed(3)})
-                                    </TabsTrigger>
-                                </TabsList>
-
-                                <div className="space-y-4 mt-4">
-                                    <div>
-                                        <label className="text-sm font-medium">Amount (USDC)</label>
-                                        <Input
-                                            type="number"
-                                            placeholder="Enter amount"
-                                            value={amount}
-                                            onChange={(e) => handleAmountChange(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="text-sm">
-                                        <div className="flex justify-between mb-2">
-                                            <span>Estimated Cost:</span>
-                                            <span>${estimatedCost.toFixed(2)} USDC</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Max Payout:</span>
-                                            <span>${(parseFloat(amount) || 0).toFixed(2)} USDC</span>
-                                        </div>
-                                    </div>
-                                    <Button
-                                        onClick={handleTrade}
-                                        className="w-full"
-                                        variant={activeTab === "yes" ? "success" : "destructive"}
-                                    >
-                                        Buy {activeTab.toUpperCase()} Shares
-                                    </Button>
-                                </div>
-                            </Tabs>
-
-                            <div className="space-y-2">
-                                <h3 className="font-semibold">Market Stats</h3>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <div>24h Volume:</div>
-                                    <div className="text-right">${mockMarket.volume24h.toLocaleString()}</div>
-                                    <div>Liquidity:</div>
-                                    <div className="text-right">${mockMarket.liquidity.toLocaleString()}</div>
-                                    <div>End Date:</div>
-                                    <div className="text-right">{mockMarket.endDate}</div>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="text-xl text-zinc-400">
+                        Target: {(mockMarket.target / 1000000).toFixed(1)}M
                     </div>
+                </div>
+            </div>
 
-                    {/* Recent Trades */}
-                    <div className="mt-8">
-                        <h3 className="font-semibold mb-4">Recent Trades</h3>
-                        <div className="space-y-2">
-                            {mockMarket.recentTrades.map((trade, index) => (
-                                <div
-                                    key={index}
-                                    className="flex justify-between items-center text-sm p-2 rounded-lg bg-card"
+            <div className="grid grid-cols-3 gap-8">
+                {/* Left Column: Chart */}
+                <div className="col-span-2 p-shadow p-6 rounded bg-black text-white">
+                    <div className="h-full">
+                        <TradingViewWidget marketId={`MRBEAST:SUBS_${mockMarket.id}`} />
+                    </div>
+                </div>
+
+                {/* Right Column: Trading Interface */}
+                <div className="p-shadow p-6 rounded bg-black text-white">
+                    <div className="space-y-6">
+                        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                            <TabsList className="grid w-full grid-cols-2 bg-zinc-900">
+                                <TabsTrigger
+                                    value="yes"
+                                    className="text-zinc-300 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400"
                                 >
-                                    <div>
-                                        <span className={trade.type === "buy" ? "text-green-600" : "text-red-600"}>
-                                            {trade.type.toUpperCase()} {trade.outcome.toUpperCase()}
-                                        </span>
-                                        <span className="text-muted-foreground ml-2">by {trade.trader}</span>
+                                    YES (${mockMarket.yesPrice.toFixed(3)})
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="no"
+                                    className="text-zinc-300 data-[state=active]:bg-red-500/20 data-[state=active]:text-red-400"
+                                >
+                                    NO (${mockMarket.noPrice.toFixed(3)})
+                                </TabsTrigger>
+                            </TabsList>
+
+                            <div className="space-y-4 mt-6">
+                                <div>
+                                    <label className="text-sm font-medium text-zinc-300">Amount (USDC)</label>
+                                    <Input
+                                        type="number"
+                                        placeholder="Enter amount"
+                                        value={amount}
+                                        onChange={(e) => handleAmountChange(e.target.value)}
+                                        className="bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500"
+                                    />
+                                </div>
+                                <div className="text-sm space-y-2">
+                                    <div className="flex justify-between text-zinc-300">
+                                        <span>Estimated Cost:</span>
+                                        <span className="text-white">${estimatedCost.toFixed(2)} USDC</span>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <span>${trade.amount.toLocaleString()} USDC</span>
-                                        <span className="text-muted-foreground">{trade.timestamp}</span>
+                                    <div className="flex justify-between text-zinc-300">
+                                        <span>Max Payout:</span>
+                                        <span className="text-white">${(parseFloat(amount) || 0).toFixed(2)} USDC</span>
                                     </div>
                                 </div>
-                            ))}
+                                <Button
+                                    onClick={handleTrade}
+                                    className="w-full text-white"
+                                    variant={activeTab === "yes" ? "success" : "destructive"}
+                                >
+                                    Buy {activeTab.toUpperCase()} Shares
+                                </Button>
+                            </div>
+                        </Tabs>
+
+                        <div className="space-y-3 border-t border-zinc-700 pt-4">
+                            <h3 className="font-semibold text-lg text-white">Market Stats</h3>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div className="text-zinc-400">24h Volume:</div>
+                                <div className="text-right text-white">${mockMarket.volume24h.toLocaleString()}</div>
+                                <div className="text-zinc-400">Liquidity:</div>
+                                <div className="text-right text-white">${mockMarket.liquidity.toLocaleString()}</div>
+                                <div className="text-zinc-400">End Date:</div>
+                                <div className="text-right text-white">{mockMarket.endDate}</div>
+                            </div>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
+
+            {/* Recent Trades */}
+            <div className="mt-8 p-shadow p-6 rounded bg-black text-white">
+                <h3 className="font-semibold text-lg mb-4">Recent Trades</h3>
+                <div className="space-y-2">
+                    {mockMarket.recentTrades.map((trade, index) => (
+                        <div
+                            key={index}
+                            className="flex justify-between items-center text-sm p-3 rounded bg-zinc-900"
+                        >
+                            <div>
+                                <span className={trade.type === "buy" ? "text-green-400" : "text-red-400"}>
+                                    {trade.type.toUpperCase()} {trade.outcome.toUpperCase()}
+                                </span>
+                                <span className="text-zinc-400 ml-2">by {trade.trader}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="text-white">${trade.amount.toLocaleString()} USDC</span>
+                                <span className="text-zinc-400">{trade.timestamp}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </Layout>
     )
 } 

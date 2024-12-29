@@ -38,9 +38,9 @@ const generateMockData = () => {
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-white p-3 border rounded-lg shadow-sm">
-                <p className="text-sm font-medium">{label}</p>
-                <p className="text-sm text-blue-600">
+            <div className="bg-zinc-900 p-3 border border-zinc-700 rounded-lg shadow-lg">
+                <p className="text-sm font-medium text-zinc-300">{label}</p>
+                <p className="text-sm text-green-400">
                     Price: {payload[0].value.toFixed(2)}%
                 </p>
             </div>
@@ -64,17 +64,18 @@ export default function TradingViewWidget({ marketId }: TradingViewWidgetProps) 
                         bottom: 0,
                     }}
                 >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
                     <XAxis
                         dataKey="date"
-                        stroke="#191919"
-                        tick={{ fill: "#191919" }}
-                        tickLine={{ stroke: "#191919" }}
+                        stroke="#71717a"
+                        tick={{ fill: "#a1a1aa" }}
+                        tickLine={{ stroke: "#71717a" }}
+                        tickFormatter={(value) => new Date(value).toLocaleDateString()}
                     />
                     <YAxis
-                        stroke="#191919"
-                        tick={{ fill: "#191919" }}
-                        tickLine={{ stroke: "#191919" }}
+                        stroke="#71717a"
+                        tick={{ fill: "#a1a1aa" }}
+                        tickLine={{ stroke: "#71717a" }}
                         domain={[0, 100]}
                         tickFormatter={(value) => `${value}%`}
                     />
@@ -82,8 +83,8 @@ export default function TradingViewWidget({ marketId }: TradingViewWidgetProps) 
                     <Area
                         type="monotone"
                         dataKey="price"
-                        stroke="#2962FF"
-                        fill="rgba(41, 98, 255, 0.28)"
+                        stroke="#22c55e"
+                        fill="rgba(34, 197, 94, 0.2)"
                         strokeWidth={2}
                     />
                 </AreaChart>

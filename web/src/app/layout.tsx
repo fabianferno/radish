@@ -1,11 +1,13 @@
 import Providers from "@/components/Providers";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Lexend_Deca } from "next/font/google";
 import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
 
-
-const inter = Inter({ subsets: ["latin"] });
+const lexendDeca = Lexend_Deca({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
 
 export const metadata: Metadata = {
   title: "Some App",
@@ -20,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className}`}>
+      <body className={`${lexendDeca.className}`}>
         <Providers>
           {children}
         </Providers>
