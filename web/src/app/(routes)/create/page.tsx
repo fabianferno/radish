@@ -8,20 +8,43 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import Layout from "@/components/layouts/MainLayout"
+import { useCreateMarket } from "@/hooks/useMarkets"
+import { useAccount } from "wagmi"
+import { CustomConnectButton } from "@/components/ui/CustomConnectButton"
 
 export default function CreateMarketPage() {
     const router = useRouter()
+    const { address } = useAccount()
+    const { createMarket, isLoading, error } = useCreateMarket()
+
     const [formData, setFormData] = useState({
         title: "",
         description: "",
         endDate: "",
     })
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        // Implement market creation logic here
-        console.log("Creating market:", formData)
-        router.push("/markets")
+        try {
+            await createMarket(formData.title, formData.endDate)
+            router.push("/markets")
+        } catch (err) {
+            console.error("Failed to create market:", err)
+        }
+    }
+
+    if (!address) {
+        return (
+            <Layout>
+                <div className="max-w-2xl mx-auto text-center">
+                    <h1 className="text-4xl font-bold mb-8">Connect Wallet</h1>
+                    <p className="mb-8 text-zinc-600">
+                        Please connect your wallet to create a prediction market
+                    </p>
+                    <CustomConnectButton dark />
+                </div>
+            </Layout>
+        )
     }
 
     return (
@@ -76,11 +99,17 @@ export default function CreateMarketPage() {
                         </div>
                     </div>
 
-                    <Button type="submit" className="w-full">
-                        Create Market
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? "Creating..." : "Create Market"}
                     </Button>
+
+                    {error && (
+                        <p className="text-red-500 text-sm mt-2">
+                            Error: {error.message}
+                        </p>
+                    )}
                 </form>
             </Card>
-        </Layout >
+        </Layout>
     )
 } 

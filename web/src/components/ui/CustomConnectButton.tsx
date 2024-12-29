@@ -1,7 +1,11 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Button } from "@/components/ui/button";
 
-export const CustomConnectButton = () => {
+export const CustomConnectButton = ({
+    dark,
+}: {
+    dark?: boolean
+}) => {
     return (
         <ConnectButton.Custom>
             {({
@@ -38,8 +42,10 @@ export const CustomConnectButton = () => {
                                     <Button
                                         onClick={openConnectModal}
                                         variant="outline"
-                                        className="font-medium border-neo-green text-neo-green hover:bg-neo-green hover:text-black"
-
+                                        className={!dark ?
+                                            `font-medium border-neo-green text-neo-green hover:bg-neo-green hover:text-black` :
+                                            `font-medium border-t border-black text-black hover:bg-neo-green hover:text-black`
+                                        }
                                     >
                                         Connect Wallet
                                     </Button>
@@ -64,7 +70,10 @@ export const CustomConnectButton = () => {
                                         onClick={openChainModal}
                                         variant="outline"
                                         size="sm"
-                                        className="flex items-center gap-2"
+                                        className={!dark ?
+                                            `flex items-center gap-2 text-white` :
+                                            `flex items-center gap-2 text-black border-t border-black`
+                                        }
                                     >
                                         {chain.hasIcon && (
                                             <div
@@ -89,7 +98,10 @@ export const CustomConnectButton = () => {
                                         onClick={openAccountModal}
                                         variant="outline"
                                         size="sm"
-                                        className="font-medium"
+                                        className={!dark ?
+                                            `font-medium text-white border-neo-green` :
+                                            `font-medium text-black border-t border-black`
+                                        }
                                     >
                                         {account.displayName}
                                         {account.displayBalance

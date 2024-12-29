@@ -5,75 +5,51 @@ import { Card } from "@/components/ui/card"
 import Layout from "@/components/layouts/MainLayout"
 import Masonry from 'react-masonry-css'
 import { motion } from "framer-motion"
+import { useMarkets } from "@/hooks/useMarkets"
+import { CustomConnectButton } from "@/components/ui/CustomConnectButton"
 
-interface Market {
-    id: string
-    title: string
-    description: string
-    endDate: string
-    creatorHandle: string
-    platform: "youtube" | "twitter" | "tiktok" | "instagram"
-    metric: "followers" | "subscribers" | "views" | "likes"
-    target: number
-    currentMetric: number
-    yesPrice: number
-    noPrice: number
-    liquidity: number
-    volume24h: number
-}
-
-// Mock data - replace with actual data fetching
-const mockMarkets: Market[] = [
-    {
-        id: "1",
-        title: "Will MrBeast reach 200M YouTube subscribers by March 2024?",
-        description: "Prediction market for MrBeast's YouTube channel reaching 200M subscribers",
-        endDate: "2024-03-31",
-        creatorHandle: "@mrbeast",
-        platform: "youtube",
-        metric: "subscribers",
-        target: 200000000,
-        currentMetric: 187000000,
-        yesPrice: 0.65,
-        noPrice: 0.35,
-        liquidity: 250000,
-        volume24h: 45000,
-    },
-    {
-        id: "2",
-        title: "Will Elon Musk reach 170M Twitter followers by Q2 2024?",
-        description: "Market predicting Elon Musk's Twitter follower growth",
-        endDate: "2024-06-30",
-        creatorHandle: "@elonmusk",
-        platform: "twitter",
-        metric: "followers",
-        target: 170000000,
-        currentMetric: 165000000,
-        yesPrice: 0.72,
-        noPrice: 0.28,
-        liquidity: 180000,
-        volume24h: 32000,
-    },
-]
-
-const PlatformIcon = ({ platform }: { platform: Market["platform"] }) => {
-    const icons = {
+const PlatformIcon = ({ platform }: { platform?: string }) => {
+    const icons: { [key: string]: string } = {
         youtube: "📺",
         twitter: "🐦",
         tiktok: "📱",
         instagram: "📸",
+        onchain: "⛓️"
     }
-    return <span className="mr-2">{icons[platform]}</span>
+    return <span className="mr-2">{icons[platform || 'onchain']}</span>
 }
 
 export default function MarketsPage() {
+    const { markets, isLoading, error } = useMarkets()
+
+    if (isLoading) {
+        return (
+            <Layout>
+                <div className="text-center">Loading markets...</div>
+            </Layout>
+        )
+    }
+
+    if (error) {
+        return (
+            <Layout>
+                <div className="text-center text-red-500">Error: {error.message}</div>
+            </Layout>
+        )
+    }
+
     return (
         <Layout>
             <div className="flex justify-between items-center mb-8 border-b border-gray-200 pb-8">
-                <h1 className="text-6xl font-semibold">Rad or Not?</h1>
-                <h3 className="text-3xl font-semibold">
-                    Bet on your favorite creators and earn 💸
-                </h3>
+                <h1 className="text-6xl font-bold">Rad or Not?</h1>
+                <div className="space-y-4">
+                    <h3 className="text-3xl font-semibold">
+                        Bet on your favorite creators and earn 💸
+                    </h3>
+                    <div className="flex justify-end">
+                        <CustomConnectButton dark />
+                    </div>
+                </div>
             </div>
 
             <Masonry
@@ -86,7 +62,7 @@ export default function MarketsPage() {
                 className="my-masonry-grid"
                 columnClassName="my-masonry-grid_column p-wall-tilt"
             >
-                {mockMarkets.map((market) => (
+                {markets.map((market) => (
                     <Link key={market.id} href={`/markets/${market.id}`} className="h-full">
                         <motion.div
                             whileHover={{
@@ -100,7 +76,9 @@ export default function MarketsPage() {
                                 <PlatformIcon platform={market.platform} />
                                 <h2 className="text-xl font-semibold">{market.title}</h2>
                             </div>
-                            <p className="mb-4 font-light text-zinc-400">{market.description}</p>
+                            {market.description && (
+                                <p className="mb-4 font-light text-zinc-400">{market.description}</p>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4 mb-4 mt-auto w-full">
                                 <div className="bg-green-500/20 p-3">
@@ -118,18 +96,24 @@ export default function MarketsPage() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                                <div>
-                                    <span className="font-medium">Creator:</span>{" "}
-                                    {market.creatorHandle}
-                                </div>
-                                <div>
-                                    <span className="font-medium">Current {market.metric}:</span>{" "}
-                                    {(market.currentMetric / 1000000).toFixed(1)}M
-                                </div>
-                                <div>
-                                    <span className="font-medium">Target:</span>{" "}
-                                    {(market.target / 1000000).toFixed(1)}M
-                                </div>
+                                {market.creatorHandle && (
+                                    <div>
+                                        <span className="font-medium">Creator:</span>{" "}
+                                        {market.creatorHandle}
+                                    </div>
+                                )}
+                                {market.currentMetric && (
+                                    <div>
+                                        <span className="font-medium">Current {market.metric}:</span>{" "}
+                                        {(market.currentMetric / 1000000).toFixed(1)}M
+                                    </div>
+                                )}
+                                {market.target && (
+                                    <div>
+                                        <span className="font-medium">Target:</span>{" "}
+                                        {(market.target / 1000000).toFixed(1)}M
+                                    </div>
+                                )}
                                 <div>
                                     <span className="font-medium">End Date:</span>{" "}
                                     {market.endDate}
@@ -146,6 +130,12 @@ export default function MarketsPage() {
                                     ${market.liquidity.toLocaleString()}
                                 </div>
                             </div>
+
+                            {market.isOnChain && (
+                                <div className="mt-4 text-sm text-green-400">
+                                    On-chain Market ⛓️
+                                </div>
+                            )}
                         </motion.div>
                     </Link>
                 ))}

@@ -9,28 +9,69 @@ import * as React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { type ThemeProviderProps } from "next-themes/dist/types";
 import {
-  mainnet,
-  optimism,
-  arbitrum,
-  sepolia,
   optimismSepolia,
-  arbitrumSepolia,
 } from "wagmi/chains";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 const queryClient = new QueryClient();
 
+const neoXTestnet = {
+  id: 12227332,
+  name: "NeoX T4",
+  network: "neoxt4",
+  nativeCurrency: {
+    decimals: 18,
+    name: "GAS",
+    symbol: "GAS",
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://neoxt4seed1.ngd.network/"],
+      webSocket: ["wss://neoxt4wss1.ngd.network"],
+    },
+    public: {
+      http: ["https://neoxt4seed1.ngd.network/"],
+      webSocket: ["wss://neoxt4wss1.ngd.network"],
+    },
+  },
+  blockExplorers: {
+    default: { name: "NeoX T4 Explorer", url: "https://xt4scan.ngd.network/" },
+  },
+} as const;
+
+const neoXMainnet = {
+  id: 47763,
+  name: "NeoX Mainnet",
+  network: "neox",
+  nativeCurrency: {
+    decimals: 18,
+    name: "GAS",
+    symbol: "GAS",
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://mainnet-1.rpc.banelabs.org"],
+      webSocket: ["wss://mainnet.wss1.banelabs.org/"],
+    },
+    public: {
+      http: ["https://mainnet-1.rpc.banelabs.org"],
+      webSocket: ["wss://mainnet.wss1.banelabs.org/"],
+    },
+  },
+  blockExplorers: {
+    default: { name: "NeoX Explorer", url: "https://xexplorer.neo.org" },
+  },
+} as const;
+
+
 const config = getDefaultConfig({
-  appName: "Some App",
+  appName: "radish-xyz",
   projectId: process.env.NEXT_PUBLIC_PROJECT_ID || "",
   chains: [
-    mainnet,
-    optimism,
-    arbitrum,
-    sepolia,
     optimismSepolia,
-    arbitrumSepolia,
+    neoXTestnet,
+    neoXMainnet,
   ],
-  ssr: true, // If your dApp uses server side rendering (SSR)
+  ssr: true,
 });
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
@@ -42,6 +83,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
+          initialChain={neoXTestnet}
           theme={darkTheme({
             accentColor: "#111111",
             accentColorForeground: "white",

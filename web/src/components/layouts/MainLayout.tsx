@@ -16,7 +16,7 @@ export default function Layout({
                 <div className="container mx-auto py-4">
                     <div className="flex justify-between items-center">
                         <Link href="/markets">
-                            <h1 className="font-bold text-2xl flex items-center gap-2">
+                            <h1 className="font-bold text-3xl flex items-center gap-2">
                                 <span className="text-neo-green">😤</span>
                                 <span className="text-neo-green">radish.xyz</span>
                             </h1>
@@ -24,6 +24,9 @@ export default function Layout({
                         <nav className="flex items-center gap-8">
                             <Link href="/markets">
                                 <span className="text-white hover:text-neo-green transition-colors">Markets</span>
+                            </Link>
+                            <Link href="/create">
+                                <span className="text-white hover:text-neo-green transition-colors">Create</span>
                             </Link>
                             <Link href="/my-predictions">
                                 <span className="text-white hover:text-neo-green transition-colors">My Positions</span>
