@@ -55,6 +55,7 @@ export function handleTokenOperation(event: TokenOperationEvent): void {
   let user = User.load(event.params.user.toString());
   if (user == null) {
     user = new User(event.params.user.toString());
+    user.userAddress = event.params.user;
     user.totalYesBought = BigInt.fromI32(0);
     user.totalYesSold = BigInt.fromI32(0);
     user.totalNoBought = BigInt.fromI32(0);

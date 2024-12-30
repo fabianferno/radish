@@ -15,6 +15,7 @@ type Market @entity {
 
 type User @entity {
   id: ID! # User address
+  userAddress: Bytes!
   marketsParticipated: [UserMarket!]! @derivedFrom(field: "user") # Relation to UserMarket
   totalYesBought: BigInt! # Total YES tokens bought across all markets
   totalNoBought: BigInt! # Total NO tokens bought across all markets

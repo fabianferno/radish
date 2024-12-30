@@ -1,6 +1,7 @@
 import { BigInt } from "@graphprotocol/graph-ts";
 import { MarketCreated as MarketCreatedEvent } from "../generated/RadishCore/RadishCore";
 import { Market } from "../generated/schema";
+import { PredictionMarket as PredictionMarketTemplate } from "../generated/templates";
 
 export function handleMarketCreated(event: MarketCreatedEvent): void {
   let entity = new Market(event.params.id.toString());
@@ -14,4 +15,6 @@ export function handleMarketCreated(event: MarketCreatedEvent): void {
   entity.totalPriceToken = BigInt.fromI32(0);
   entity.resolved = false;
   entity.save();
+
+  PredictionMarketTemplate.create(event.params.marketContract);
 }
