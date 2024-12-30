@@ -39,3 +39,14 @@ type UserMarket @entity {
   spent: BigInt! # Total price tokens spent in this market
   rewards: BigInt! # Total price tokens rewarded in this market
 }
+
+type Order @entity {
+  id: String!
+  market: Market!
+  user: User!
+  amount: BigInt!
+  price: BigInt!
+  type: String!
+  tokenType: String!
+  timestamp: BigInt!
+}

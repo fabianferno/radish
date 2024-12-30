@@ -6,7 +6,7 @@ import {
   RewardClaimed as RewardClaimedEvent,
   TokenOperation as TokenOperationEvent,
 } from "../generated/templates/PredictionMarket/PredictionMarket";
-import { Market, User, UserMarket } from "../generated/schema";
+import { Market, Order, User, UserMarket } from "../generated/schema";
 
 export function handleMarketResolved(event: MarketResolvedEvent): void {
   let entity = Market.load(event.params.marketId.toString());
@@ -111,6 +111,16 @@ export function handleTokenOperation(event: TokenOperationEvent): void {
           event.params.amount
         );
         userMarket.spent = userMarket.spent.plus(event.params.cost);
+
+        let order = new Order(event.transaction.hash.toHexString());
+        order.market = event.params.marketId.toString();
+        order.user = event.params.user;
+        order.amount = event.params.amount;
+        order.price = event.params.cost;
+        order.type = "Buy";
+        order.tokenType = "Yes";
+        order.timestamp = event.block.timestamp;
+        order.save();
         userMarket.save();
         market.save();
         user.save();
@@ -122,6 +132,15 @@ export function handleTokenOperation(event: TokenOperationEvent): void {
         userMarket.noBought = userMarket.noBought.plus(event.params.amount);
         userMarket.noInMarket = userMarket.noInMarket.plus(event.params.amount);
         userMarket.spent = userMarket.spent.plus(event.params.cost);
+        let order = new Order(event.transaction.hash.toHexString());
+        order.market = event.params.marketId.toString();
+        order.user = event.params.user;
+        order.amount = event.params.amount;
+        order.price = event.params.cost;
+        order.type = "Buy";
+        order.tokenType = "No";
+        order.timestamp = event.block.timestamp;
+        order.save();
         userMarket.save();
         market.save();
         user.save();
@@ -134,6 +153,15 @@ export function handleTokenOperation(event: TokenOperationEvent): void {
         user.totalYesSold = user.totalYesSold.plus(event.params.amount);
         userMarket.yesSold = userMarket.yesSold.plus(event.params.amount);
         userMarket.spent = userMarket.spent.minus(event.params.cost);
+        let order = new Order(event.transaction.hash.toHexString());
+        order.market = event.params.marketId.toString();
+        order.user = event.params.user;
+        order.amount = event.params.amount;
+        order.price = event.params.cost;
+        order.type = "Sell";
+        order.tokenType = "Yes";
+        order.timestamp = event.block.timestamp;
+        order.save();
         userMarket.save();
         market.save();
         user.save();
@@ -144,6 +172,15 @@ export function handleTokenOperation(event: TokenOperationEvent): void {
         user.totalNoSold = user.totalNoSold.plus(event.params.amount);
         userMarket.noSold = userMarket.noSold.plus(event.params.amount);
         userMarket.spent = userMarket.spent.minus(event.params.cost);
+        let order = new Order(event.transaction.hash.toHexString());
+        order.market = event.params.marketId.toString();
+        order.user = event.params.user;
+        order.amount = event.params.amount;
+        order.price = event.params.cost;
+        order.type = "Sell";
+        order.tokenType = "No";
+        order.timestamp = event.block.timestamp;
+        order.save();
         userMarket.save();
         market.save();
         user.save();

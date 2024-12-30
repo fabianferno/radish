@@ -5,6 +5,11 @@ import {
   PREDICTION_MARKET_ABI,
   OPTIMISM_SEPOLIA_CHAIN_ID,
 } from "@/config/contracts";
+import { readContract } from "@wagmi/core";
+
+import { request, gql } from "graphql-request";
+import { useEffect, useState } from "react";
+import { config } from "@/lib/config";
 
 export interface Market {
   id: string;
@@ -79,6 +84,9 @@ export const mockMarkets: Market[] = [
 
 export function useMarkets() {
   const { address } = useAccount();
+  const [markets, setMarkets] = useState<Market[]>(mockMarkets); // Start with mock markets
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   const { data: marketCount } = useReadContract({
     address: CONTRACT_ADDRESSES[OPTIMISM_SEPOLIA_CHAIN_ID].radishCore,
@@ -87,69 +95,92 @@ export function useMarkets() {
     chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
   });
 
-  // For demo purposes, combine mock and real markets
-  const markets: Market[] = [...mockMarkets];
+  useEffect(() => {
+    const fetchMarkets = async () => {
+      setIsLoading(true);
 
-  const getMarkets = async () => {
-    try {
-      const query = `query getMarkets {
-  markets {
-    id
-    creator
-    endTime
-    marketContract
-    question
-    resolved
-    totalNo
-    totalPriceToken
-    totalStaked
-    totalYes
-    won
-    participants {
-      user {
-        userAddress
+      try {
+        // Fetch GraphQL data
+        const query = `query getMarkets {
+          markets {
+            id
+            creator
+            endTime
+            marketContract
+            question
+            resolved
+            totalNo
+            totalPriceToken
+            totalStaked
+            totalYes
+            won
+          }
+        }`;
+
+        const data: any = await request(
+          "https://api.studio.thegraph.com/query/73364/radish/version/latest",
+          query
+        );
+
+        const marketsFromGraph = await Promise.all(
+          data.markets.map(async (m: any) => {
+            try {
+              // Fetch yesPrice and noPrice using readContract
+              const yesPrice = await readContract(config, {
+                address: m.marketContract,
+                abi: PREDICTION_MARKET_ABI,
+                functionName: "getTokenPrice",
+                chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+                args: [true],
+              });
+
+              const noPrice = await readContract(config, {
+                address: m.marketContract,
+                abi: PREDICTION_MARKET_ABI,
+                functionName: "getTokenPrice",
+                chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+                args: [false],
+              });
+
+              return {
+                id: m.id,
+                title: m.question,
+                endDate: m.endTime,
+                creatorHandle: m.creator,
+                platform: "twitter", // Adjust platform if available
+                metric: "followers", // Adjust metric if available
+                yesPrice: Number(yesPrice) / 1e18,
+                noPrice: Number(noPrice) / 1e18,
+                liquidity: m.totalStaked,
+                volume24h: m.totalStaked, // Example value
+                isOnChain: true,
+                contractAddress: m.marketContract,
+              } as Market;
+            } catch (err) {
+              console.error("Error reading contract:", err);
+              return null;
+            }
+          })
+        );
+
+        // Filter out null results and merge with mock markets
+        const validMarkets = marketsFromGraph.filter((m) => m !== null);
+        setMarkets([...mockMarkets, ...validMarkets]);
+      } catch (err) {
+        console.error("Error fetching markets:", err);
+        setError(err as Error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }
-}`;
-      const data: any = await request(
-        "https://api.studio.thegraph.com/query/73364/radish/version/latest",
-        query
-      );
-      console.log(data.markets);
-      return data.markets;
-    } catch (error) {}
-  };
-  // Add real markets if available
-  if (marketCount) {
-    // This is a placeholder - in a real app, you'd fetch all markets
-    const marketsonchain = await getMarkets();
-    marketsonchain.forEach((m: any) => {
-      markets.push({
-        id: m.id,
-        title: m.question,
-        endDate: m.endTime,
-        creatorHandle: m.creator,
-        platform: "twitter",
-        metric: "followers",
-        target: 200000000,
-        currentMetric: 187000000,
-        yesPrice: 0.65,
-        noPrice: 0.35,
-        liquidity: m.totalStaked,
-        volume24h: m.totalStaked,
-        isOnChain: true,
-        contractAddress: m.marketContract,
-      });
-    });
-    // For now, just show that we can read from the contract
-    console.log("Total markets on chain:", markets);
-  }
+    };
+
+    fetchMarkets();
+  }, []);
 
   return {
     markets,
-    isLoading: false,
-    error: null,
+    isLoading: isLoading,
+    error: error,
   };
 }
 
@@ -179,6 +210,9 @@ export function useCreateMarket() {
 }
 
 export function useMarket(marketId: string) {
+  const [markets, setMarkets] = useState<Market[]>(mockMarkets); // Start with mock markets
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   // For mock markets, return mock data
   if (marketId.startsWith("mock-")) {
     const mockMarket = mockMarkets.find((m) => m.id === marketId);
@@ -190,11 +224,94 @@ export function useMarket(marketId: string) {
   }
 
   // For real markets, fetch from chain
+
+  useEffect(() => {
+    const fetchMarkets = async () => {
+      setIsLoading(true);
+
+      try {
+        // Fetch GraphQL data
+        const query = `query getMarkets {
+          markets {
+            id
+            creator
+            endTime
+            marketContract
+            question
+            resolved
+            totalNo
+            totalPriceToken
+            totalStaked
+            totalYes
+            won
+          }
+        }`;
+
+        const data: any = await request(
+          "https://api.studio.thegraph.com/query/73364/radish/version/latest",
+          query
+        );
+
+        const marketsFromGraph = await Promise.all(
+          data.markets.map(async (m: any) => {
+            try {
+              // Fetch yesPrice and noPrice using readContract
+              const yesPrice = await readContract(config, {
+                address: m.marketContract,
+                abi: PREDICTION_MARKET_ABI,
+                functionName: "getTokenPrice",
+                chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+                args: [true],
+              });
+
+              const noPrice = await readContract(config, {
+                address: m.marketContract,
+                abi: PREDICTION_MARKET_ABI,
+                functionName: "getTokenPrice",
+                chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+                args: [false],
+              });
+
+              return {
+                id: m.id,
+                title: m.question,
+                endDate: m.endTime,
+                creatorHandle: m.creator,
+                platform: "twitter", // Adjust platform if available
+                metric: "followers", // Adjust metric if available
+                yesPrice: Number(yesPrice) / 1e18,
+                noPrice: Number(noPrice) / 1e18,
+                liquidity: m.totalStaked,
+                volume24h: m.totalStaked, // Example value
+                isOnChain: true,
+                contractAddress: m.marketContract,
+              } as Market;
+            } catch (err) {
+              console.error("Error reading contract:", err);
+              return null;
+            }
+          })
+        );
+
+        // Filter out null results and merge with mock markets
+        const validMarkets = marketsFromGraph.filter((m) => m !== null);
+        setMarkets([...mockMarkets, ...validMarkets]);
+      } catch (err) {
+        console.error("Error fetching markets:", err);
+        setError(err as Error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMarkets();
+  }, []);
+
   // This is a placeholder - in a real app, you'd implement proper fetching
   return {
-    market: null,
-    isLoading: false,
-    error: null,
+    market: markets.find((m) => m.id === marketId),
+    isLoading: isLoading,
+    error: error,
   };
 }
 
