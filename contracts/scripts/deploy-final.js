@@ -49,7 +49,7 @@ async function main() {
   console.log("Ownership of YesToken and NoToken transferred to RadishCore");
 
   // Step 6: Create a market in RadishCore
-  const question = "Will BTC reach $150k in 2024?";
+  const question = "Will MrBeast reach 200M YouTube subscribers by March 2024?";
   const endTime = Math.floor(Date.now() / 1000) + 86400 * 30; // 30 days from now
 
   const createMarketTx = await radishCore.createMarket(question, endTime);

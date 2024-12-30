@@ -13,6 +13,8 @@ module.exports = {
         enabled: true,
         runs: 200,
       },
+      evmVersion: "shanghai", // Add EVM version specification
+      viaIR: true, // Enable IR-based code generation
     },
   },
   networks: {
@@ -35,13 +37,16 @@ module.exports = {
       },
     },
     neox_mainnet: {
-      url: "https://mainnet-1.rpc.banelabs.org",
+      url: "https://mainnet-2.rpc.banelabs.org", //https://mainnet-2.rpc.banelabs.org/
       chainId: 47763,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: "auto",
       verify: {
         explorer: "https://xexplorer.neo.org",
       },
+      gasPrice: 40000000000, // 40 GWEI
+      maxPriorityFeePerGas: 20000000000,
+      // timeout: 120000, // Increase timeout
+      allowUnlimitedContractSize: true,
     },
   },
   etherscan: {

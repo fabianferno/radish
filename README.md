@@ -19,3 +19,16 @@ Future plans:
 - More Robust integration with a Neo supported Data oracle systems or an Optimistic Oracle for fully permissionless market resolution
 
 
+
+Deployed App: https://radish-neo.vercel.app/
+Testnet Deployment: 
+- radishCore: 0x3B927596f629f4307B4712635c29a4Fa7788B554"
+- mockERC20: 0x6Fc773968759345799b910E8E3134068625eE912"
+- noToken: "0x53b30DbC983D2C5FDff400B2B77fB288136d19B4"
+- yesToken: "0xb60Ec2363CfefA78Fa7C7A269859d2B3D8c8C9F7"
+
+Mainnet Deployment: 
+- radishCore: 0x1d2DBf7C3F28D21B41fbe7bd335a51cB37f61a11
+- mockERC20: 0x4a31Ce110F74D134DD7C948D6E8197341d0FE361
+- noToken: 0xe1462B0dF1210182980907127ff71745014A7F94
+- yesToken: 0xC889816314D3A0EaC3e4C304eD1E54847a309821
