@@ -14,7 +14,7 @@ type Market @entity {
 }
 
 type User @entity {
-  id: ID! # User address
+  id: Bytes! # User address
   userAddress: Bytes!
   marketsParticipated: [UserMarket!]! @derivedFrom(field: "user") # Relation to UserMarket
   totalYesBought: BigInt! # Total YES tokens bought across all markets
@@ -27,7 +27,7 @@ type User @entity {
 }
 
 type UserMarket @entity {
-  id: ID! # Unique identifier, e.g., `user_address-market_id`
+  id: String! # Unique identifier, e.g., `user_address-market_id`
   user: User! # Relation to User
   market: Market! # Relation to Market
   yesBought: BigInt! # Total YES tokens bought in this market

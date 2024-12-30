@@ -90,11 +90,60 @@ export function useMarkets() {
   // For demo purposes, combine mock and real markets
   const markets: Market[] = [...mockMarkets];
 
+  const getMarkets = async () => {
+    try {
+      const query = `query getMarkets {
+  markets {
+    id
+    creator
+    endTime
+    marketContract
+    question
+    resolved
+    totalNo
+    totalPriceToken
+    totalStaked
+    totalYes
+    won
+    participants {
+      user {
+        userAddress
+      }
+    }
+  }
+}`;
+      const data: any = await request(
+        "https://api.studio.thegraph.com/query/73364/radish/version/latest",
+        query
+      );
+      console.log(data.markets);
+      return data.markets;
+    } catch (error) {}
+  };
   // Add real markets if available
   if (marketCount) {
     // This is a placeholder - in a real app, you'd fetch all markets
+    const marketsonchain = await getMarkets();
+    marketsonchain.forEach((m: any) => {
+      markets.push({
+        id: m.id,
+        title: m.question,
+        endDate: m.endTime,
+        creatorHandle: m.creator,
+        platform: "twitter",
+        metric: "followers",
+        target: 200000000,
+        currentMetric: 187000000,
+        yesPrice: 0.65,
+        noPrice: 0.35,
+        liquidity: m.totalStaked,
+        volume24h: m.totalStaked,
+        isOnChain: true,
+        contractAddress: m.marketContract,
+      });
+    });
     // For now, just show that we can read from the contract
-    console.log("Total markets on chain:", marketCount);
+    console.log("Total markets on chain:", markets);
   }
 
   return {
