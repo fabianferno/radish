@@ -70,8 +70,8 @@ contract RadishCore is Ownable {
         // Initialize the market after registration
         market.initializeLiquidity();
 
-        marketCount++;
 
         emit MarketCreated(marketCount, _question, _endtime, address(market) , priceToken, yesToken, noToken);
+        marketCount++;
     }
 }

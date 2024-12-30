@@ -8,9 +8,9 @@ dataSources:
     name: RadishCore
     network: optimism-sepolia
     source:
-      address: "0x9d840afc5dd607b093b12656c6465aaf0243cb73"
+      address: "0xEb9F9b7719f2f1d816fa01aCfc0e80241261779C"
       abi: RadishCore
-      startBlock: 21882158
+      startBlock: 21883274
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
