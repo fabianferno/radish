@@ -37,7 +37,7 @@ export function handleEmergencyLiquidityAdded(
 }
 
 export function handleRewardClaimed(event: RewardClaimedEvent): void {
-  let user = User.load(event.params.user.toString());
+  let user = User.load(event.params.user);
   let userMarket = UserMarket.load(
     event.params.user.toString() + "-" + event.params.marketId.toString()
   );
@@ -52,10 +52,10 @@ export function handleRewardClaimed(event: RewardClaimedEvent): void {
 
 export function handleTokenOperation(event: TokenOperationEvent): void {
   let market = Market.load(event.params.marketId.toString());
-  let user = User.load(event.params.user.toString());
+  let user = User.load(event.params.user);
   if (user == null) {
     log.info("New User", [event.params.user.toString()]);
-    user = new User(event.params.user.toString());
+    user = new User(event.params.user);
     user.userAddress = event.params.user;
     user.totalYesBought = BigInt.fromI32(0);
     user.totalYesSold = BigInt.fromI32(0);
@@ -88,7 +88,7 @@ export function handleTokenOperation(event: TokenOperationEvent): void {
       userMarket = new UserMarket(
         event.params.user.toString() + "-" + event.params.marketId.toString()
       );
-      userMarket.user = event.params.user.toString();
+      userMarket.user = event.params.user;
       userMarket.market = event.params.marketId.toString();
       userMarket.yesBought = BigInt.fromI32(0);
       userMarket.noBought = BigInt.fromI32(0);
