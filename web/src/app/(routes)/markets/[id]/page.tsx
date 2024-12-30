@@ -66,11 +66,16 @@ export default function MarketPage() {
   const {
     buy,
     sell,
+    approve,
     isLoading: actionLoading,
     error: actionError,
-  }: { buy: any; sell: any; isLoading: boolean; error: any } = useMarketActions(
-    id as string
-  );
+  }: {
+    buy: any;
+    sell: any;
+    approve: any;
+    isLoading: boolean;
+    error: any;
+  } = useMarketActions(id as string);
   const [activeTab, setActiveTab] = useState("yes");
   const [amount, setAmount] = useState("");
   const [estimatedCost, setEstimatedCost] = useState(0);
@@ -90,7 +95,7 @@ export default function MarketPage() {
         "https://api.studio.thegraph.com/query/73364/radish/version/latest",
         `
                 query MyQuery {
-                                orders(where: { market: "${0}" }) {
+                                orders(where: { market: "${id}" }) {
                                     id
                                     amount
                                     price
@@ -144,6 +149,15 @@ export default function MarketPage() {
       }
     } catch (err) {
       console.error("Trade failed:", err);
+    }
+  };
+
+  const handleApprove = async () => {
+    if (!market) return;
+    try {
+      await approve(market.contractAddress);
+    } catch (err) {
+      console.error("Approve failed:", err);
     }
   };
 
@@ -263,6 +277,16 @@ export default function MarketPage() {
                         </span>
                       </div>
                     </div>
+                    <Button
+                      onClick={handleApprove}
+                      className="w-full text-white"
+                      variant={activeTab === "yes" ? "success" : "destructive"}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading
+                        ? "Processing..."
+                        : `Approve Contract to Buy ${activeTab.toUpperCase()} Shares`}
+                    </Button>
                     <Button
                       onClick={handleTrade}
                       className="w-full text-white"
