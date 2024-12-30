@@ -24,6 +24,33 @@ dataSources:
       eventHandlers:
         - event: MarketCreated(uint256,string,uint256,address,address,address,address)
           handler: handleMarketCreated
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
-      file: ./src/radish-c-ore.ts
+      file: ./src/radish-core.ts
+templates:
+  - kind: ethereum
+    name: PredictionMarket
+    network: neox
+    source:
+      abi: PredictionMarket
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Market
+        - User
+        - UserMarket
+      abis:
+        - name: PredictionMarket
+          file: ./abis/PredictionMarket.json
+      eventHandlers:
+        - event: LiquidityAdded(indexed address,indexed uint256,uint256)
+          handler: handleLiquidityAdded
+        - event: MarketResolved(indexed uint256,bool,uint256)
+          handler: handleMarketResolved
+        - event: RewardClaimed(indexed address,indexed uint256,uint256)
+          handler: handleRewardClaimed
+        - event: TokenOperation(indexed address,indexed uint256,uint8,uint8,uint256,uint256)
+          handler: handleTokenOperation
+        - event: EmergencyLiquidityAdded(indexed address,indexed uint256,uint256)
+          handler: handleEmergencyLiquidityAdded
+      file: ./src/prediction-market.ts
