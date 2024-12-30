@@ -1,0 +1,29 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: RadishCOre
+    network: neox
+    source:
+      address: "0x1d2DBf7C3F28D21B41fbe7bd335a51cB37f61a11"
+      abi: RadishCOre
+      startBlock: 1095079
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - MarketCreated
+        - OwnershipTransferred
+      abis:
+        - name: RadishCOre
+          file: ./abis/RadishCOre.json
+      eventHandlers:
+        - event: MarketCreated(uint256,string,uint256,address,address,address,address)
+          handler: handleMarketCreated
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+      file: ./src/radish-c-ore.ts
