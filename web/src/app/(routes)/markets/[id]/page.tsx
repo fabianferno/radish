@@ -36,8 +36,8 @@ const mockTrades: Trade[] = [
 export default function MarketPage() {
     const { id } = useParams()
     const { address } = useAccount()
-    const { market, isLoading: marketLoading, error: marketError } = useMarket(id as string)
-    const { buy, sell, isLoading: actionLoading, error: actionError } = useMarketActions(id as string)
+    const { market, isLoading: marketLoading, error: marketError }: { market: any, isLoading: boolean, error: any } = useMarket(id as string)
+    const { buy, sell, isLoading: actionLoading, error: actionError }: { buy: any, sell: any, isLoading: boolean, error: any } = useMarketActions(id as string)
     const [activeTab, setActiveTab] = useState("yes")
     const [amount, setAmount] = useState("")
     const [estimatedCost, setEstimatedCost] = useState(0)
@@ -89,12 +89,12 @@ export default function MarketPage() {
     }
 
     return (
-        <Layout>
-            <div className="flex justify-between items-center mb-8 border-b border-zinc-700 pb-8">
+        <Layout >
+            <div className="flex justify-between items-center border-b border-zinc-700 pb-5 mb-[60px]">
                 <h1 className="text-5xl font-semibold text-black w-2/3">{market.title}</h1>
                 <div className="text-right space-y-4">
                     {market.creatorHandle && (
-                        <div className="text-3xl font-semibold text-white">
+                        <div className="text-3xl font-semibold text-black">
                             {market.creatorHandle}
                         </div>
                     )}
@@ -108,117 +108,118 @@ export default function MarketPage() {
                     </div>
                 </div>
             </div>
+            <section className="p-wall-tilt mt-10">
+                <div className="grid grid-cols-3 gap-8">
+                    {/* Left Column: Chart */}
+                    <div className="col-span-2 p-shadow p-6 rounded bg-black text-white">
+                        <div className="h-full">
+                            <TradingViewWidget marketId={market.id} />
+                        </div>
+                    </div>
 
-            <div className="grid grid-cols-3 gap-8">
-                {/* Left Column: Chart */}
-                <div className="col-span-2 p-shadow p-6 rounded bg-black text-white">
-                    <div className="h-full">
-                        <TradingViewWidget marketId={market.id} />
+                    {/* Right Column: Trading Interface */}
+                    <div className="p-shadow p-6 rounded bg-black text-white">
+                        {!address ? (
+                            <div className="text-center space-y-4">
+                                <p className="text-zinc-400">Connect your wallet to trade</p>
+                                <CustomConnectButton dark />
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                                    <TabsList className="grid w-full grid-cols-2 bg-zinc-900">
+                                        <TabsTrigger
+                                            value="yes"
+                                            className="text-zinc-300 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400"
+                                        >
+                                            YES (${market.yesPrice.toFixed(3)})
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="no"
+                                            className="text-zinc-300 data-[state=active]:bg-red-500/20 data-[state=active]:text-red-400"
+                                        >
+                                            NO (${market.noPrice.toFixed(3)})
+                                        </TabsTrigger>
+                                    </TabsList>
+
+                                    <div className="space-y-4 mt-6">
+                                        <div>
+                                            <label className="text-sm font-medium text-zinc-300">Amount (USDC)</label>
+                                            <Input
+                                                type="number"
+                                                placeholder="Enter amount"
+                                                value={amount}
+                                                onChange={(e) => handleAmountChange(e.target.value)}
+                                                className="bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500"
+                                            />
+                                        </div>
+                                        <div className="text-sm space-y-2">
+                                            <div className="flex justify-between text-zinc-300">
+                                                <span>Estimated Cost:</span>
+                                                <span className="text-white">${estimatedCost.toFixed(2)} USDC</span>
+                                            </div>
+                                            <div className="flex justify-between text-zinc-300">
+                                                <span>Max Payout:</span>
+                                                <span className="text-white">${(parseFloat(amount) || 0).toFixed(2)} USDC</span>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            onClick={handleTrade}
+                                            className="w-full text-white"
+                                            variant={activeTab === "yes" ? "success" : "destructive"}
+                                            disabled={actionLoading || !amount}
+                                        >
+                                            {actionLoading ? "Processing..." : `Buy ${activeTab.toUpperCase()} Shares`}
+                                        </Button>
+
+                                        {actionError && (
+                                            <p className="text-red-500 text-sm">
+                                                Error: {actionError.message}
+                                            </p>
+                                        )}
+                                    </div>
+                                </Tabs>
+
+                                <div className="space-y-3 border-t border-zinc-700 pt-4">
+                                    <h3 className="font-semibold text-lg text-white">Market Stats</h3>
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                        <div className="text-zinc-400">24h Volume:</div>
+                                        <div className="text-right text-white">${market.volume24h.toLocaleString()}</div>
+                                        <div className="text-zinc-400">Liquidity:</div>
+                                        <div className="text-right text-white">${market.liquidity.toLocaleString()}</div>
+                                        <div className="text-zinc-400">End Date:</div>
+                                        <div className="text-right text-white">{market.endDate}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Right Column: Trading Interface */}
-                <div className="p-shadow p-6 rounded bg-black text-white">
-                    {!address ? (
-                        <div className="text-center space-y-4">
-                            <p className="text-zinc-400">Connect your wallet to trade</p>
-                            <CustomConnectButton dark />
-                        </div>
-                    ) : (
-                        <div className="space-y-6">
-                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                                <TabsList className="grid w-full grid-cols-2 bg-zinc-900">
-                                    <TabsTrigger
-                                        value="yes"
-                                        className="text-zinc-300 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400"
-                                    >
-                                        YES (${market.yesPrice.toFixed(3)})
-                                    </TabsTrigger>
-                                    <TabsTrigger
-                                        value="no"
-                                        className="text-zinc-300 data-[state=active]:bg-red-500/20 data-[state=active]:text-red-400"
-                                    >
-                                        NO (${market.noPrice.toFixed(3)})
-                                    </TabsTrigger>
-                                </TabsList>
-
-                                <div className="space-y-4 mt-6">
-                                    <div>
-                                        <label className="text-sm font-medium text-zinc-300">Amount (USDC)</label>
-                                        <Input
-                                            type="number"
-                                            placeholder="Enter amount"
-                                            value={amount}
-                                            onChange={(e) => handleAmountChange(e.target.value)}
-                                            className="bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500"
-                                        />
-                                    </div>
-                                    <div className="text-sm space-y-2">
-                                        <div className="flex justify-between text-zinc-300">
-                                            <span>Estimated Cost:</span>
-                                            <span className="text-white">${estimatedCost.toFixed(2)} USDC</span>
-                                        </div>
-                                        <div className="flex justify-between text-zinc-300">
-                                            <span>Max Payout:</span>
-                                            <span className="text-white">${(parseFloat(amount) || 0).toFixed(2)} USDC</span>
-                                        </div>
-                                    </div>
-                                    <Button
-                                        onClick={handleTrade}
-                                        className="w-full text-white"
-                                        variant={activeTab === "yes" ? "success" : "destructive"}
-                                        disabled={actionLoading || !amount}
-                                    >
-                                        {actionLoading ? "Processing..." : `Buy ${activeTab.toUpperCase()} Shares`}
-                                    </Button>
-
-                                    {actionError && (
-                                        <p className="text-red-500 text-sm">
-                                            Error: {actionError.message}
-                                        </p>
-                                    )}
+                {/* Recent Trades */}
+                <div className="mt-8 p-shadow p-6 rounded bg-black text-white">
+                    <h3 className="font-semibold text-lg mb-4">Recent Trades</h3>
+                    <div className="space-y-2">
+                        {mockTrades.map((trade, index) => (
+                            <div
+                                key={index}
+                                className="flex justify-between items-center text-sm p-3 rounded bg-zinc-900"
+                            >
+                                <div>
+                                    <span className={trade.type === "buy" ? "text-green-400" : "text-red-400"}>
+                                        {trade.type.toUpperCase()} {trade.outcome.toUpperCase()}
+                                    </span>
+                                    <span className="text-zinc-400 ml-2">by {trade.trader}</span>
                                 </div>
-                            </Tabs>
-
-                            <div className="space-y-3 border-t border-zinc-700 pt-4">
-                                <h3 className="font-semibold text-lg text-white">Market Stats</h3>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <div className="text-zinc-400">24h Volume:</div>
-                                    <div className="text-right text-white">${market.volume24h.toLocaleString()}</div>
-                                    <div className="text-zinc-400">Liquidity:</div>
-                                    <div className="text-right text-white">${market.liquidity.toLocaleString()}</div>
-                                    <div className="text-zinc-400">End Date:</div>
-                                    <div className="text-right text-white">{market.endDate}</div>
+                                <div className="flex items-center gap-4">
+                                    <span className="text-white">${trade.amount.toLocaleString()} USDC</span>
+                                    <span className="text-zinc-400">{trade.timestamp}</span>
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        ))}
+                    </div>
                 </div>
-            </div>
-
-            {/* Recent Trades */}
-            <div className="mt-8 p-shadow p-6 rounded bg-black text-white">
-                <h3 className="font-semibold text-lg mb-4">Recent Trades</h3>
-                <div className="space-y-2">
-                    {mockTrades.map((trade, index) => (
-                        <div
-                            key={index}
-                            className="flex justify-between items-center text-sm p-3 rounded bg-zinc-900"
-                        >
-                            <div>
-                                <span className={trade.type === "buy" ? "text-green-400" : "text-red-400"}>
-                                    {trade.type.toUpperCase()} {trade.outcome.toUpperCase()}
-                                </span>
-                                <span className="text-zinc-400 ml-2">by {trade.trader}</span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <span className="text-white">${trade.amount.toLocaleString()} USDC</span>
-                                <span className="text-zinc-400">{trade.timestamp}</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+            </section>
         </Layout>
     )
 } 

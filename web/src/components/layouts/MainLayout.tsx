@@ -21,14 +21,14 @@ export default function Layout({
 }>) {
     return (
         <div className="min-h-screen bg-white">
-            <header className="bg-black text-white py-2">
+            <header className="bg-black text-white py-2 p-shadow">
                 <div className="container mx-auto py-4">
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-4">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0">
+                        <div className="flex flex-col md:flex-row items-center gap-4">
                             <Link href="/markets">
-                                <h1 className="font-bold text-3xl flex items-center gap-2 mr-5">
+                                <h1 className="font-bold text-3xl flex items-center gap-2 mr-0 md:mr-5">
                                     <span className="text-neo-green">🚀📈</span>
-                                    <span className="text-neo-green">radish.xyz</span>
+                                    <span className="text-neo-green">RADISH.XYZ</span>
                                 </h1>
                             </Link>
                             <div className="flex items-center gap-2">
@@ -36,7 +36,7 @@ export default function Layout({
                                 <NeoXLogo />
                             </div>
                         </div>
-                        <nav className="flex items-center gap-8">
+                        <nav className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
                             <Link href="/markets">
                                 <span className="text-white hover:text-neo-green transition-colors">Markets</span>
                             </Link>
@@ -60,7 +60,7 @@ export default function Layout({
                 <div className="container mx-auto py-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <div>
-                            <h3 className="font-bold text-3xl mb-2">radish.xyz</h3>
+                            <h3 className="font-bold text-3xl mb-2">RADISH.XYZ</h3>
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="text-gray-400">powered by</span>
                                 <NeoXLogo />

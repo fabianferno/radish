@@ -1,5 +1,6 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Button } from "@/components/ui/button";
+import Image from 'next/image';
 
 export const CustomConnectButton = ({
     dark,
@@ -83,10 +84,12 @@ export const CustomConnectButton = ({
                                                 }}
                                             >
                                                 {chain.iconUrl && (
-                                                    <img
+                                                    <Image
                                                         alt={chain.name ?? 'Chain icon'}
                                                         src={chain.iconUrl}
                                                         className="w-4 h-4"
+                                                        width={20}
+                                                        height={20}
                                                     />
                                                 )}
                                             </div>

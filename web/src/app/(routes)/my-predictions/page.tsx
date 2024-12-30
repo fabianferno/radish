@@ -38,16 +38,16 @@ const mockPredictions: Prediction[] = [
 export default function MyPredictionsPage() {
     return (
         <Layout>
-            <div className="flex justify-between items-center mb-8 border-b border-gray-200 pb-8">
-                <h1 className="text-6xl font-semibold">Your positions</h1>
-                <div className="flex flex-col items-end gap-4">
-                    <h3 className="text-3xl font-semibold">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-0 mb-8 border-b border-gray-200 pb-8">
+                <h1 className="text-4xl md:text-6xl font-semibold text-center md:text-left">Your positions</h1>
+                <div className="flex flex-col items-center md:items-end gap-4">
+                    <h3 className="text-xl md:text-3xl font-semibold text-center md:text-right">
                         Track your bets and earnings 💰
                     </h3>
-                    <div className="flex items-center gap-4">
-                        <div>Your total earnings: $1,234</div>
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        <div className="text-center md:text-right">Your total earnings: $1,234</div>
                         <button
-                            className="bg-neo-green hover:bg-neo-green/80 text-black font-bold py-2 px-6 rounded-lg transition-colors"
+                            className="bg-neo-green hover:bg-neo-green/80 text-black font-bold py-2 px-6 rounded-lg transition-colors w-full md:w-auto"
                             onClick={() => {
                                 // TODO: Implement claim winnings functionality
                                 console.log("Claiming winnings...");
@@ -77,7 +77,7 @@ export default function MyPredictionsPage() {
                                 x: 10,
                                 filter: 'invert(1) hue-rotate(20deg)',
                             }}
-                            className="p-shadow p-6 w-full h-full flex flex-col items-center rounded bg-black text-white"
+                            className="p-shadow p-6 w-full md:h-full mb-6 flex flex-col items-center rounded bg-black text-white"
                         >
                             <h2 className="text-xl font-semibold mb-4">{pred.marketTitle}</h2>
 

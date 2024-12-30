@@ -20,7 +20,7 @@ const PlatformIcon = ({ platform }: { platform?: string }) => {
 }
 
 export default function MarketsPage() {
-    const { markets, isLoading, error } = useMarkets()
+    const { markets, isLoading, error }: { markets: any[], isLoading: boolean, error: any } = useMarkets()
 
     if (isLoading) {
         return (
@@ -40,13 +40,13 @@ export default function MarketsPage() {
 
     return (
         <Layout>
-            <div className="flex justify-between items-center mb-8 border-b border-gray-200 pb-8">
-                <h1 className="text-6xl font-bold">Rad or Not?</h1>
-                <div className="space-y-4">
-                    <h3 className="text-3xl font-semibold">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-0 mb-8 border-b border-gray-200 pb-8">
+                <h1 className="text-4xl md:text-6xl font-bold text-center md:text-left">Rad or Not?</h1>
+                <div className="space-y-4 text-center md:text-right">
+                    <h3 className="text-xl md:text-3xl font-semibold">
                         Bet on your favorite creators and earn 💸
                     </h3>
-                    <div className="flex justify-end">
+                    <div className="flex justify-center md:justify-end">
                         <CustomConnectButton dark />
                     </div>
                 </div>
@@ -70,7 +70,7 @@ export default function MarketsPage() {
                                 x: 10,
                                 filter: 'invert(1) hue-rotate(20deg)',
                             }}
-                            className="p-shadow p-6 w-full h-full flex flex-col items-center rounded bg-black text-white"
+                            className="p-shadow p-6 w-full md:h-full mb-6 flex flex-col items-center rounded bg-black text-white"
                         >
                             <div className="flex items-center mb-2">
                                 <PlatformIcon platform={market.platform} />
