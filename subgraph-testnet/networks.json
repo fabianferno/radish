@@ -1,0 +1,8 @@
+{
+  "neox-testnet": {
+    "RadishCore": {
+      "address": "0x3B927596f629f4307B4712635c29a4Fa7788B554",
+      "startBlock": 1095275
+    }
+  }
+}

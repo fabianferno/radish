@@ -1,0 +1,57 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: RadishCore
+    network: neox-testnet
+    source:
+      address: "0x3B927596f629f4307B4712635c29a4Fa7788B554"
+      abi: RadishCore
+      startBlock: 1095275
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - MarketCreated
+        - OwnershipTransferred
+      abis:
+        - name: RadishCore
+          file: ./abis/RadishCore.json
+      eventHandlers:
+        - event: MarketCreated(uint256,string,uint256,address,address,address,address)
+          handler: handleMarketCreated
+
+      file: ./src/radish-core.ts
+templates:
+  - kind: ethereum
+    name: PredictionMarket
+    network: neox-testnet
+    source:
+      abi: PredictionMarket
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Market
+        - User
+        - UserMarket
+      abis:
+        - name: PredictionMarket
+          file: ./abis/PredictionMarket.json
+      eventHandlers:
+        - event: LiquidityAdded(indexed address,indexed uint256,uint256)
+          handler: handleLiquidityAdded
+        - event: MarketResolved(indexed uint256,bool,uint256)
+          handler: handleMarketResolved
+        - event: RewardClaimed(indexed address,indexed uint256,uint256)
+          handler: handleRewardClaimed
+        - event: TokenOperation(indexed address,indexed uint256,uint8,uint8,uint256,uint256)
+          handler: handleTokenOperation
+        - event: EmergencyLiquidityAdded(indexed address,indexed uint256,uint256)
+          handler: handleEmergencyLiquidityAdded
+      file: ./src/prediction-market.ts
