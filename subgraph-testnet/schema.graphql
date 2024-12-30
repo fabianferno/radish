@@ -1,22 +1,52 @@
-type MarketCreated @entity(immutable: true) {
-  id: Bytes!
-  RadishCore_id: BigInt! # uint256
-  question: String! # string
-  endTime: BigInt! # uint256
-  marketContract: Bytes! # address
-  priceToken: Bytes! # address
-  yesToken: Bytes! # address
-  noToken: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+type Market @entity {
+  id: ID! # Unique identifier for the market
+  question: String! # Market question
+  endTime: BigInt! # Market end time (timestamp)
+  marketContract: Bytes! # Market contract address
+  creator: Bytes! # Relation to User
+  totalStaked: BigInt! # Total staked in the market
+  totalYes: BigInt! # Total YES tokens staked
+  totalNo: BigInt! # Total NO tokens staked
+  resolved: Boolean! # Whether the market is resolved
+  won: Boolean # Outcome (true for YES, false for NO)
+  totalPriceToken: BigInt # Total value of the market
+  participants: [UserMarket!]! @derivedFrom(field: "market") # Relation to UserMarket
 }
 
-type OwnershipTransferred @entity(immutable: true) {
-  id: Bytes!
-  previousOwner: Bytes! # address
-  newOwner: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+type User @entity {
+  id: Bytes! # User address
+  userAddress: Bytes!
+  marketsParticipated: [UserMarket!]! @derivedFrom(field: "user") # Relation to UserMarket
+  totalYesBought: BigInt! # Total YES tokens bought across all markets
+  totalNoBought: BigInt! # Total NO tokens bought across all markets
+  totalYesSold: BigInt! # Total YES tokens sold across all markets
+  totalNoSold: BigInt! # Total NO tokens sold across all markets
+  totalSpent: BigInt! # Total price tokens spent across all markets
+  totalReceived: BigInt! # Total price tokens received across all markets
+  totalRewards: BigInt! # Total rewards claimed across all markets
+}
+
+type UserMarket @entity {
+  id: String! # Unique identifier, e.g., `user_address-market_id`
+  user: User! # Relation to User
+  market: Market! # Relation to Market
+  yesBought: BigInt! # Total YES tokens bought in this market
+  noBought: BigInt! # Total NO tokens bought in this market
+  yesSold: BigInt! # Total YES tokens sold in this market
+  noSold: BigInt! # Total NO tokens sold in this market
+  yesInMarket: BigInt! # Total yes tokens  in this market
+  noInMarket: BigInt! # Total no tokens  in this market
+  spent: BigInt! # Total price tokens spent in this market
+  rewards: BigInt! # Total price tokens rewarded in this market
+}
+
+type Order @entity {
+  id: String!
+  market: Market!
+  user: User!
+  amount: BigInt!
+  price: BigInt!
+  type: String!
+  tokenType: String!
+  timestamp: BigInt!
 }
