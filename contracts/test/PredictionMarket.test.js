@@ -260,9 +260,17 @@ describe("Prediction Market System", function () {
             overrides
           );
 
-        await expect(market.connect(user1).buy(true, amount, overrides))
-          .to.emit(market, "TokenOperation")
-          .withArgs(user1.address, 1, 1, amount);
+        const tx = await market.connect(user1).buy(true, amount, overrides);
+        const receipt = await tx.wait();
+        const event = receipt.logs.find(
+          (log) => log.fragment && log.fragment.name === "TokenOperation"
+        );
+        expect(event).to.not.be.undefined;
+        expect(event.args[0]).to.equal(user1.address); // user
+        expect(event.args[1]).to.equal(0n); // marketId
+        expect(event.args[2]).to.equal(1n); // opType (buy)
+        expect(event.args[3]).to.equal(1n); // tokenType (YES)
+        expect(event.args[4]).to.equal(amount); // amount
       });
 
       it("Should allow buying NO tokens", async function () {
@@ -279,9 +287,17 @@ describe("Prediction Market System", function () {
             overrides
           );
 
-        await expect(market.connect(user1).buy(false, amount, overrides))
-          .to.emit(market, "TokenOperation")
-          .withArgs(user1.address, 1, 2, amount);
+        const tx = await market.connect(user1).buy(false, amount, overrides);
+        const receipt = await tx.wait();
+        const event = receipt.logs.find(
+          (log) => log.fragment && log.fragment.name === "TokenOperation"
+        );
+        expect(event).to.not.be.undefined;
+        expect(event.args[0]).to.equal(user1.address); // user
+        expect(event.args[1]).to.equal(0n); // marketId
+        expect(event.args[2]).to.equal(1n); // opType (buy)
+        expect(event.args[3]).to.equal(2n); // tokenType (NO)
+        expect(event.args[4]).to.equal(amount); // amount
       });
 
       it("Should calculate correct token prices", async function () {
@@ -385,6 +401,235 @@ describe("Prediction Market System", function () {
         const state = await market.getMarketState();
         expect(state.resolved).to.be.true;
       });
+    });
+  });
+
+  describe("Claim Rewards", function () {
+    it("Should allow YES token holders to claim rewards when YES wins", async function () {
+      const { market, priceToken, yesToken, user1, user2, marketId } =
+        await loadFixture(deployContractsFixture);
+
+      const amount = ethers.parseEther("10");
+      await priceToken
+        .connect(user1)
+        .approve(
+          await market.getAddress(),
+          ethers.parseEther("1000"),
+          overrides
+        );
+      await priceToken
+        .connect(user2)
+        .approve(
+          await market.getAddress(),
+          ethers.parseEther("1000"),
+          overrides
+        );
+
+      // User1 buys YES tokens
+      await market.connect(user1).buy(true, amount, overrides);
+      // User2 buys less YES tokens
+      await market.connect(user2).buy(true, amount / 2n, overrides);
+
+      // Fast forward time
+      await time.increase(86401);
+
+      // Resolve market (YES wins as it has more tokens)
+      const owner = await market.owner();
+      const ownerSigner = await ethers.getSigner(owner);
+      await market.connect(ownerSigner).resolve(overrides);
+
+      // Check initial balances
+      const initialBalance1 = await priceToken.balanceOf(user1.address);
+
+      // Claim rewards
+      const tx = await market.connect(user1).claimReward();
+      const receipt = await tx.wait();
+      const event = receipt.logs.find(
+        (log) => log.fragment && log.fragment.name === "RewardClaimed"
+      );
+      expect(event).to.not.be.undefined;
+      expect(event.args[0]).to.equal(user1.address);
+      expect(event.args[1]).to.equal(0n);
+
+      // Check final balances
+      const finalBalance1 = await priceToken.balanceOf(user1.address);
+      expect(finalBalance1).to.be.gt(initialBalance1);
+    });
+
+    it("Should allow NO token holders to claim rewards when NO wins", async function () {
+      const { market, priceToken, noToken, user1, user2, marketId } =
+        await loadFixture(deployContractsFixture);
+
+      const amount = ethers.parseEther("10");
+      await priceToken
+        .connect(user1)
+        .approve(
+          await market.getAddress(),
+          ethers.parseEther("1000"),
+          overrides
+        );
+      await priceToken
+        .connect(user2)
+        .approve(
+          await market.getAddress(),
+          ethers.parseEther("1000"),
+          overrides
+        );
+
+      // User1 buys NO tokens
+      await market.connect(user1).buy(false, amount, overrides);
+      // User2 buys YES tokens with less amount
+      await market.connect(user2).buy(true, amount / 2n, overrides);
+
+      // Fast forward time
+      await time.increase(86401);
+
+      // Resolve market (NO wins as it has more tokens)
+      const owner = await market.owner();
+      const ownerSigner = await ethers.getSigner(owner);
+      await market.connect(ownerSigner).resolve(overrides);
+
+      // Check initial balances
+      const initialBalance1 = await priceToken.balanceOf(user1.address);
+
+      // Claim rewards
+      const tx = await market.connect(user1).claimReward();
+      const receipt = await tx.wait();
+      const event = receipt.logs.find(
+        (log) => log.fragment && log.fragment.name === "RewardClaimed"
+      );
+      expect(event).to.not.be.undefined;
+      expect(event.args[0]).to.equal(user1.address);
+      expect(event.args[1]).to.equal(0n);
+
+      // Check final balances
+      const finalBalance1 = await priceToken.balanceOf(user1.address);
+      expect(finalBalance1).to.be.gt(initialBalance1);
+    });
+
+    it("Should not allow claiming rewards before market is resolved", async function () {
+      const { market, priceToken, user1 } = await loadFixture(
+        deployContractsFixture
+      );
+
+      const amount = ethers.parseEther("10");
+      await priceToken
+        .connect(user1)
+        .approve(
+          await market.getAddress(),
+          ethers.parseEther("1000"),
+          overrides
+        );
+      await market.connect(user1).buy(true, amount, overrides);
+
+      await expect(market.connect(user1).claimReward()).to.be.revertedWith(
+        "Market not resolved"
+      );
+    });
+
+    it("Should not allow claiming rewards with no tokens", async function () {
+      const { market, user1 } = await loadFixture(deployContractsFixture);
+
+      // Fast forward time
+      await time.increase(86401);
+
+      // Resolve market
+      const owner = await market.owner();
+      const ownerSigner = await ethers.getSigner(owner);
+      await market.connect(ownerSigner).resolve(overrides);
+
+      await expect(market.connect(user1).claimReward()).to.be.revertedWith(
+        "No NO tokens held"
+      );
+    });
+
+    it("Should not allow claiming rewards twice", async function () {
+      const { market, priceToken, user1, marketId } = await loadFixture(
+        deployContractsFixture
+      );
+
+      const amount = ethers.parseEther("10");
+      await priceToken
+        .connect(user1)
+        .approve(
+          await market.getAddress(),
+          ethers.parseEther("1000"),
+          overrides
+        );
+      await market.connect(user1).buy(true, amount, overrides);
+
+      // Fast forward time
+      await time.increase(86401);
+
+      // Resolve market
+      const owner = await market.owner();
+      const ownerSigner = await ethers.getSigner(owner);
+      await market.connect(ownerSigner).resolve(overrides);
+
+      // First claim should succeed
+      await market.connect(user1).claimReward();
+
+      // Second claim should fail
+      await expect(market.connect(user1).claimReward()).to.be.revertedWith(
+        "No YES tokens held"
+      );
+    });
+
+    it("Should distribute rewards proportionally to token holdings", async function () {
+      const { market, priceToken, user1, user2, marketId } = await loadFixture(
+        deployContractsFixture
+      );
+
+      const amount1 = ethers.parseEther("10");
+      const amount2 = ethers.parseEther("5");
+
+      await priceToken
+        .connect(user1)
+        .approve(
+          await market.getAddress(),
+          ethers.parseEther("1000"),
+          overrides
+        );
+      await priceToken
+        .connect(user2)
+        .approve(
+          await market.getAddress(),
+          ethers.parseEther("1000"),
+          overrides
+        );
+
+      // User1 buys more YES tokens than User2
+      await market.connect(user1).buy(true, amount1, overrides);
+      await market.connect(user2).buy(true, amount2, overrides);
+
+      // Fast forward time
+      await time.increase(86401);
+
+      // Resolve market
+      const owner = await market.owner();
+      const ownerSigner = await ethers.getSigner(owner);
+      await market.connect(ownerSigner).resolve(overrides);
+
+      // Record initial balances
+      const initialBalance1 = await priceToken.balanceOf(user1.address);
+      const initialBalance2 = await priceToken.balanceOf(user2.address);
+
+      // Both users claim rewards
+      await market.connect(user1).claimReward();
+      await market.connect(user2).claimReward();
+
+      // Check final balances
+      const finalBalance1 = await priceToken.balanceOf(user1.address);
+      const finalBalance2 = await priceToken.balanceOf(user2.address);
+
+      const reward1 = finalBalance1 - initialBalance1;
+      const reward2 = finalBalance2 - initialBalance2;
+
+      // User1's reward should be approximately double User2's reward
+      expect(Number(reward1)).to.be.approximately(
+        Number(reward2) * 2,
+        Number(ethers.parseEther("0.1"))
+      );
     });
   });
 });

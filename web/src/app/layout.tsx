@@ -6,7 +6,7 @@ import { Providers } from "./providers";
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Radish.xyz - Bet on your favorite creators and earn rewards",
+  title: "Radish - Bet on your favorite creators and earn rewards",
   description: "Bet on your favorite creators and earn rewards",
 };
 
