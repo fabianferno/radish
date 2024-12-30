@@ -38,5 +38,4 @@ type UserMarket @entity {
   noInMarket: BigInt! # Total no tokens  in this market
   spent: BigInt! # Total price tokens spent in this market
   rewards: BigInt! # Total price tokens rewarded in this market
-  stand: String! # User's final stand (e.g., "YES" or "NO")
 }

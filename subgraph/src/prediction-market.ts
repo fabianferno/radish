@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 import {
   MarketResolved as MarketResolvedEvent,
   LiquidityAdded as LiquidityAddedEvent,
@@ -54,6 +54,7 @@ export function handleTokenOperation(event: TokenOperationEvent): void {
   let market = Market.load(event.params.marketId.toString());
   let user = User.load(event.params.user.toString());
   if (user == null) {
+    log.info("New User", [event.params.user.toString()]);
     user = new User(event.params.user.toString());
     user.userAddress = event.params.user;
     user.totalYesBought = BigInt.fromI32(0);
@@ -65,11 +66,25 @@ export function handleTokenOperation(event: TokenOperationEvent): void {
     user.totalRewards = BigInt.fromI32(0);
     user.save();
   }
+  if (market == null) {
+    log.info("NO MARKET ,{} ", [event.params.marketId.toString()]);
+  }
   if (market) {
+    log.info("Token Operation", [
+      event.params.user.toString(),
+      event.params.marketId.toString(),
+      event.params.tokenType.toString(),
+      event.params.opType.toString(),
+      event.params.amount.toString(),
+    ]);
     let userMarket = UserMarket.load(
       event.params.user.toString() + "-" + event.params.marketId.toString()
     );
     if (userMarket == null) {
+      log.info("New User Market", [
+        event.params.user.toString(),
+        event.params.marketId.toString(),
+      ]);
       userMarket = new UserMarket(
         event.params.user.toString() + "-" + event.params.marketId.toString()
       );
