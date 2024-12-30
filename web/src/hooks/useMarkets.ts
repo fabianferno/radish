@@ -4,12 +4,14 @@ import {
   RADISH_CORE_ABI,
   PREDICTION_MARKET_ABI,
   OPTIMISM_SEPOLIA_CHAIN_ID,
+  ERC20_ABI,
 } from "@/config/contracts";
 import { readContract } from "@wagmi/core";
 
 import { request, gql } from "graphql-request";
 import { useEffect, useState } from "react";
 import { config } from "@/lib/config";
+import { parseEther } from "viem";
 
 export interface Market {
   id: string;
@@ -330,6 +332,11 @@ export function useMarketActions(marketId: string) {
     error: sellError,
   } = useWriteContract();
 
+  const {
+    writeContractAsync: approve,
+    isPending: approveIsPending,
+    error: approveError,
+  } = useWriteContract();
   // For mock markets, return mock actions
   if (marketId.startsWith("mock-")) {
     return {
@@ -338,6 +345,9 @@ export function useMarketActions(marketId: string) {
       },
       sell: async (isYes: boolean, amount: number) => {
         console.log("Mock sell:", { isYes, amount });
+      },
+      approve: async (address: `0x${string}`) => {
+        console.log("Mock approve:", { address });
       },
       isLoading: false,
       error: null,
@@ -364,7 +374,17 @@ export function useMarketActions(marketId: string) {
         args: [isYes, BigInt(amount * 1e18)],
       });
     },
-    isLoading: buyIsPending || sellIsPending,
-    error: buyError || sellError,
+
+    approve: async (address: `0x${string}`) => {
+      await approve({
+        address: CONTRACT_ADDRESSES[OPTIMISM_SEPOLIA_CHAIN_ID].mockERC20,
+        abi: ERC20_ABI,
+        functionName: "approve",
+        chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+        args: [address, parseEther("1000")],
+      });
+    },
+    isLoading: buyIsPending || sellIsPending || approveIsPending,
+    error: buyError || sellError || approveError,
   };
 }
