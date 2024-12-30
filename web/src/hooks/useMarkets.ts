@@ -3,15 +3,15 @@ import {
   CONTRACT_ADDRESSES,
   RADISH_CORE_ABI,
   PREDICTION_MARKET_ABI,
-  OPTIMISM_SEPOLIA_CHAIN_ID,
   ERC20_ABI,
+  SUBGRAPH_URL,
 } from "@/config/contracts";
 import { readContract } from "@wagmi/core";
-
-import { request, gql } from "graphql-request";
+import { request } from "graphql-request";
 import { useEffect, useState } from "react";
 import { config } from "@/lib/config";
 import { parseEther } from "viem";
+import { useChainId } from "wagmi";
 
 export interface Market {
   id: string;
@@ -89,12 +89,13 @@ export function useMarkets() {
   const [markets, setMarkets] = useState<Market[]>(mockMarkets); // Start with mock markets
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const chainId = useChainId();
 
   const { data: marketCount } = useReadContract({
-    address: CONTRACT_ADDRESSES[OPTIMISM_SEPOLIA_CHAIN_ID].radishCore,
+    address: CONTRACT_ADDRESSES[chainId].radishCore,
     abi: RADISH_CORE_ABI,
     functionName: "marketCount",
-    chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+    chainId: chainId,
   });
 
   useEffect(() => {
@@ -119,10 +120,7 @@ export function useMarkets() {
           }
         }`;
 
-        const data: any = await request(
-          "https://api.studio.thegraph.com/query/73364/radish/version/latest",
-          query
-        );
+        const data: any = await request(SUBGRAPH_URL[chainId], query);
 
         const marketsFromGraph = await Promise.all(
           data.markets.map(async (m: any) => {
@@ -132,7 +130,7 @@ export function useMarkets() {
                 address: m.marketContract,
                 abi: PREDICTION_MARKET_ABI,
                 functionName: "getTokenPrice",
-                chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+                chainId: chainId as any,
                 args: [true],
               });
 
@@ -140,7 +138,7 @@ export function useMarkets() {
                 address: m.marketContract,
                 abi: PREDICTION_MARKET_ABI,
                 functionName: "getTokenPrice",
-                chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+                chainId: chainId as any,
                 args: [false],
               });
 
@@ -187,6 +185,7 @@ export function useMarkets() {
 }
 
 export function useCreateMarket() {
+  const chainId = useChainId();
   const {
     writeContractAsync,
     isPending: isLoading,
@@ -197,9 +196,9 @@ export function useCreateMarket() {
     const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
     await writeContractAsync({
       abi: RADISH_CORE_ABI,
-      address: CONTRACT_ADDRESSES[OPTIMISM_SEPOLIA_CHAIN_ID].radishCore,
+      address: CONTRACT_ADDRESSES[chainId].radishCore,
       functionName: "createMarket",
-      chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+      chainId: chainId,
       args: [question, BigInt(endTimestamp)],
     });
   };
@@ -215,18 +214,9 @@ export function useMarket(marketId: string) {
   const [markets, setMarkets] = useState<Market[]>(mockMarkets); // Start with mock markets
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  // For mock markets, return mock data
-  if (marketId.startsWith("mock-")) {
-    const mockMarket = mockMarkets.find((m) => m.id === marketId);
-    return {
-      market: mockMarket,
-      isLoading: false,
-      error: null,
-    };
-  }
+  const chainId = useChainId();
 
   // For real markets, fetch from chain
-
   useEffect(() => {
     const fetchMarkets = async () => {
       setIsLoading(true);
@@ -249,10 +239,7 @@ export function useMarket(marketId: string) {
           }
         }`;
 
-        const data: any = await request(
-          "https://api.studio.thegraph.com/query/73364/radish/version/latest",
-          query
-        );
+        const data: any = await request(SUBGRAPH_URL[chainId], query);
 
         const marketsFromGraph = await Promise.all(
           data.markets.map(async (m: any) => {
@@ -262,7 +249,7 @@ export function useMarket(marketId: string) {
                 address: m.marketContract,
                 abi: PREDICTION_MARKET_ABI,
                 functionName: "getTokenPrice",
-                chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+                chainId: chainId as any,
                 args: [true],
               });
 
@@ -270,7 +257,7 @@ export function useMarket(marketId: string) {
                 address: m.marketContract,
                 abi: PREDICTION_MARKET_ABI,
                 functionName: "getTokenPrice",
-                chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+                chainId: chainId as any,
                 args: [false],
               });
 
@@ -309,6 +296,16 @@ export function useMarket(marketId: string) {
     fetchMarkets();
   }, []);
 
+  // For mock markets, return mock data
+  if (marketId.startsWith("mock-")) {
+    const mockMarket = mockMarkets.find((m) => m.id === marketId);
+    return {
+      market: mockMarket,
+      isLoading: false,
+      error: null,
+    };
+  }
+
   // This is a placeholder - in a real app, you'd implement proper fetching
   return {
     market: markets.find((m) => m.id === marketId),
@@ -319,6 +316,7 @@ export function useMarket(marketId: string) {
 
 export function useMarketActions(marketId: string) {
   const { address } = useAccount();
+  const chainId = useChainId();
 
   // For real markets, implement contract interactions
   const {
@@ -361,7 +359,7 @@ export function useMarketActions(marketId: string) {
         address: address,
         abi: PREDICTION_MARKET_ABI,
         functionName: "buy",
-        chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+        chainId: chainId as any,
         args: [isYes, BigInt(amount * 1e18)],
       });
     },
@@ -370,17 +368,17 @@ export function useMarketActions(marketId: string) {
         address: address,
         abi: PREDICTION_MARKET_ABI,
         functionName: "sell",
-        chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+        chainId: chainId as any,
         args: [isYes, BigInt(amount * 1e18)],
       });
     },
 
     approve: async (address: `0x${string}`) => {
       await approve({
-        address: CONTRACT_ADDRESSES[OPTIMISM_SEPOLIA_CHAIN_ID].mockERC20,
+        address: CONTRACT_ADDRESSES[chainId].mockERC20,
         abi: ERC20_ABI,
         functionName: "approve",
-        chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
+        chainId: chainId as any,
         args: [address, parseEther("1000")],
       });
     },

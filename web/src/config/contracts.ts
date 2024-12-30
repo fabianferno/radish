@@ -2,6 +2,17 @@ export const OPTIMISM_SEPOLIA_CHAIN_ID = 11155420;
 export const NEOX_TESTNET_CHAIN_ID = 12227332;
 export const NEOX_MAINNET_CHAIN_ID = 47763;
 
+export const SUBGRAPH_URL: {
+  [key: number]: string;
+} = {
+  [OPTIMISM_SEPOLIA_CHAIN_ID]:
+    "https://api.studio.thegraph.com/query/73364/radish/version/latest",
+  [NEOX_TESTNET_CHAIN_ID]:
+    "https://api.studio.thegraph.com/query/73364/radish-testnet/version/latest",
+  [NEOX_MAINNET_CHAIN_ID]:
+    "https://api.studio.thegraph.com/query/73364/radish-mainnet/version/latest",
+};
+
 export const CONTRACT_ADDRESSES: {
   [key: number]: { [key: string]: `0x${string}` };
 } = {

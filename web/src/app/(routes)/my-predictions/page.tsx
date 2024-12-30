@@ -164,6 +164,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { getUserMarkets } from "@/hooks/getUserMarket";
 import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 
 interface Prediction {
   marketId: string;
@@ -196,6 +197,7 @@ const mockPredictions: Prediction[] = [
 
 export default function MyPredictionsPage() {
   const { address } = useAccount();
+  const chainId = useChainId();
   const [userPredictions, setUserPredictions] = useState<Prediction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -204,7 +206,7 @@ export default function MyPredictionsPage() {
 
     setIsLoading(true);
     try {
-      const data = await getUserMarkets(address);
+      const data = await getUserMarkets(address, chainId);
       const parsedUserPredictions: Prediction[] = data.marketsParticipated.map(
         (market: any) => ({
           marketId: market.market.id,

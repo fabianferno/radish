@@ -1,6 +1,7 @@
 import { request, gql } from "graphql-request";
+import { SUBGRAPH_URL } from "@/config/contracts";
 
-export const getUserMarkets = async (user: string) => {
+export const getUserMarkets = async (user: string, chainId: number) => {
   try {
     const query = gql`
       query getUserMarkets {
@@ -34,10 +35,7 @@ export const getUserMarkets = async (user: string) => {
     }
   }
 }`;
-    const data: any = await request(
-      "https://api.studio.thegraph.com/query/73364/radish/version/latest",
-      query
-    );
+    const data: any = await request(SUBGRAPH_URL[chainId], query);
     console.log(data.user);
     return data.user;
   } catch (error) {

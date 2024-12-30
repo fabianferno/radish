@@ -11,6 +11,8 @@ import { useMarket, useMarketActions } from "@/hooks/useMarkets";
 import { useAccount } from "wagmi";
 import { CustomConnectButton } from "@/components/ui/CustomConnectButton";
 import { request, gql } from "graphql-request";
+import { SUBGRAPH_URL } from "@/config/contracts";
+import { useChainId } from "wagmi";
 
 // Dynamically import TradingView chart to avoid SSR issues
 const TradingViewWidget = dynamic(
@@ -57,6 +59,7 @@ const mockTrades: Trade[] = [
 
 export default function MarketPage() {
   const { id } = useParams();
+  const chainId = useChainId();
   const { address } = useAccount();
   const {
     market,
@@ -92,7 +95,7 @@ export default function MarketPage() {
   const fetchData = async () => {
     try {
       const data: any = await request(
-        "https://api.studio.thegraph.com/query/73364/radish/version/latest",
+        SUBGRAPH_URL[chainId],
         `
                 query MyQuery {
                                 orders(where: { market: "${id}" }) {
