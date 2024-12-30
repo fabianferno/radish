@@ -319,8 +319,16 @@ export function useMarketActions(marketId: string) {
   const { address } = useAccount();
 
   // For real markets, implement contract interactions
-  const { writeContractAsync: buyAsync } = useWriteContract();
-  const { writeContractAsync: sellAsync } = useWriteContract();
+  const {
+    writeContractAsync: buyAsync,
+    isPending: buyIsPending,
+    error: buyError,
+  } = useWriteContract();
+  const {
+    writeContractAsync: sellAsync,
+    isPending: sellIsPending,
+    error: sellError,
+  } = useWriteContract();
 
   // For mock markets, return mock actions
   if (marketId.startsWith("mock-")) {
@@ -337,25 +345,26 @@ export function useMarketActions(marketId: string) {
   }
 
   return {
-    buy: async (isYes: boolean, amount: number) => {
+    buy: async (isYes: boolean, amount: number, address: `0x${string}`) => {
+      console.log("Buy:", { isYes, amount, address });
       await buyAsync({
-        address: CONTRACT_ADDRESSES[OPTIMISM_SEPOLIA_CHAIN_ID].radishCore,
+        address: address,
         abi: PREDICTION_MARKET_ABI,
         functionName: "buy",
         chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
-        args: [isYes, BigInt(amount)],
+        args: [isYes, BigInt(amount * 1e18)],
       });
     },
-    sell: async (isYes: boolean, amount: number) => {
+    sell: async (isYes: boolean, amount: number, address: `0x${string}`) => {
       await sellAsync({
-        address: CONTRACT_ADDRESSES[OPTIMISM_SEPOLIA_CHAIN_ID].radishCore,
+        address: address,
         abi: PREDICTION_MARKET_ABI,
         functionName: "sell",
         chainId: OPTIMISM_SEPOLIA_CHAIN_ID,
-        args: [isYes, BigInt(amount)],
+        args: [isYes, BigInt(amount * 1e18)],
       });
     },
-    isLoading: false,
-    error: null,
+    isLoading: buyIsPending || sellIsPending,
+    error: buyError || sellError,
   };
 }

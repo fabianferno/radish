@@ -138,9 +138,9 @@ export default function MarketPage() {
     if (!market || !amount) return;
     try {
       if (activeTab === "yes") {
-        await buy(true, parseFloat(amount));
+        await buy(true, parseFloat(amount), market.contractAddress);
       } else {
-        await buy(false, parseFloat(amount));
+        await buy(false, parseFloat(amount), market.contractAddress);
       }
     } catch (err) {
       console.error("Trade failed:", err);
@@ -202,9 +202,7 @@ export default function MarketPage() {
             <div className="h-full">
               <TradingViewWidget
                 marketId={market.id}
-                trades={trades.filter(
-                  (t) => t.type === "buy" && t.outcome === "yes"
-                )}
+                trades={trades.filter((t) => t.outcome === activeTab)}
               />
             </div>
           </div>
