@@ -1,0 +1,22 @@
+type MarketCreated @entity(immutable: true) {
+  id: Bytes!
+  RadishCore_id: BigInt! # uint256
+  question: String! # string
+  endTime: BigInt! # uint256
+  marketContract: Bytes! # address
+  priceToken: Bytes! # address
+  yesToken: Bytes! # address
+  noToken: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
