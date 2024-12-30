@@ -1,5 +1,7 @@
-# radish
+![image](https://github.com/user-attachments/assets/384c2bdd-d7ef-4f80-ab23-8726f9a57672)
 
+
+# radish
 RADISH is a app that enables new social-fi paradigm where fans get to bet on their favorite content creators on platforms like Youtube, Twitter and Tiktok. Creator rivalry has always entertained the masses greatly - Pewd vs T-series, KSI vs LoganPaul, etc - With radish - all this hype and fandom can be monetized through a prediction markets that resolve followers, subscribers & viewer counts.
 
 Features:
