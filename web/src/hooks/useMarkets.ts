@@ -9,7 +9,7 @@ import {
 import { readContract } from "@wagmi/core";
 import { request } from "graphql-request";
 import { useEffect, useState } from "react";
-import { config } from "@/lib/config";
+import { config } from "@/app/providers";
 import { parseEther } from "viem";
 import { useChainId } from "wagmi";
 
@@ -142,6 +142,9 @@ export function useMarkets() {
                 args: [false],
               });
 
+              console.log("yesPrice", yesPrice);
+              console.log("noPrice", noPrice);
+
               return {
                 id: m.id,
                 title: m.question,
@@ -166,6 +169,7 @@ export function useMarkets() {
         // Filter out null results and merge with mock markets
         const validMarkets = marketsFromGraph.filter((m) => m !== null);
         setMarkets([...mockMarkets, ...validMarkets]);
+        console.log("markets", data.markets);
       } catch (err) {
         console.error("Error fetching markets:", err);
         setError(err as Error);
@@ -335,6 +339,20 @@ export function useMarketActions(marketId: string) {
     isPending: approveIsPending,
     error: approveError,
   } = useWriteContract();
+
+  const {
+    writeContractAsync: resolve,
+    isPending: resolveIsPending,
+    error: resolveError,
+  } = useWriteContract();
+  // For mock markets, return mock actions
+
+  const {
+    writeContractAsync: claim,
+    isPending: claimIsPending,
+    error: claimError,
+  } = useWriteContract();
+
   // For mock markets, return mock actions
   if (marketId.startsWith("mock-")) {
     return {
@@ -346,6 +364,12 @@ export function useMarketActions(marketId: string) {
       },
       approve: async (address: `0x${string}`) => {
         console.log("Mock approve:", { address });
+      },
+      resolve: async (address: `0x${string}`) => {
+        console.log("Mock resolve");
+      },
+      claim: async (address: `0x${string}`) => {
+        console.log("Mock claim");
       },
       isLoading: false,
       error: null,
@@ -382,7 +406,30 @@ export function useMarketActions(marketId: string) {
         args: [address, parseEther("1000")],
       });
     },
-    isLoading: buyIsPending || sellIsPending || approveIsPending,
-    error: buyError || sellError || approveError,
+
+    resolve: async (address: `0x${string}`) => {
+      await resolve({
+        address: address,
+        abi: PREDICTION_MARKET_ABI,
+        functionName: "resolve",
+        chainId: chainId as any,
+      });
+    },
+
+    claim: async (address: `0x${string}`) => {
+      await claim({
+        address: address,
+        abi: PREDICTION_MARKET_ABI,
+        functionName: "claimReward",
+        chainId: chainId as any,
+      });
+    },
+    isLoading:
+      buyIsPending ||
+      sellIsPending ||
+      approveIsPending ||
+      resolveIsPending ||
+      claimIsPending,
+    error: buyError || sellError || approveError || resolveError || claimError,
   };
 }

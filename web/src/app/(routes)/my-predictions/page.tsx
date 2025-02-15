@@ -165,6 +165,8 @@ import { useEffect, useState } from "react";
 import { getUserMarkets } from "@/hooks/getUserMarket";
 import { useAccount } from "wagmi";
 import { useChainId } from "wagmi";
+import { Button } from "@/components/ui/button";
+import { useMarketActions } from "@/hooks/useMarkets";
 
 interface Prediction {
   marketId: string;
@@ -173,6 +175,8 @@ interface Prediction {
   timestamp: string;
   endDate: string;
   currentProbability: number;
+  resolved: boolean;
+  contractAddress?: string;
 }
 
 // Mock data - replace with actual data fetching
@@ -184,6 +188,7 @@ const mockPredictions: Prediction[] = [
     timestamp: "2023-12-24 10:30",
     endDate: "2024-03-31",
     currentProbability: 0.65,
+    resolved: false,
   },
   {
     marketId: "mock-2",
@@ -192,6 +197,7 @@ const mockPredictions: Prediction[] = [
     timestamp: "2023-12-23 15:45",
     endDate: "2024-06-30",
     currentProbability: 0.45,
+    resolved: false,
   },
 ];
 
@@ -221,6 +227,9 @@ export default function MyPredictionsPage() {
             parseFloat(market.market.totalYes) /
             (parseFloat(market.market.totalYes) +
               parseFloat(market.market.totalNo)),
+
+          resolved: market.market.resolved,
+          contractAddress: market.market.marketContract,
         })
       );
       setUserPredictions(parsedUserPredictions);
@@ -236,6 +245,12 @@ export default function MyPredictionsPage() {
   }, [address]);
 
   const combinedPredictions = [...mockPredictions, ...userPredictions];
+
+  const handleClaim = async (pred: Prediction) => {
+    console.log("Claiming winnings...", pred);
+    const { claim } = useMarketActions(pred.marketId); // eslint-disable-line
+    await claim(pred.contractAddress as `0x${string}`);
+  };
 
   return (
     <Layout>
@@ -274,10 +289,8 @@ export default function MyPredictionsPage() {
         columnClassName="my-masonry-grid_column p-wall-tilt"
       >
         {combinedPredictions.map((pred) => (
-          <Link
+          <div
             key={pred.marketId}
-            href={`/markets/${pred.marketId}`}
-            className="h-full"
           >
             <motion.div
               whileHover={{
@@ -285,7 +298,7 @@ export default function MyPredictionsPage() {
                 x: 10,
                 filter: "invert(1) hue-rotate(20deg)",
               }}
-              className="p-shadow p-6 w-full md:h-full mb-6 flex flex-col items-center rounded bg-black text-white"
+              className="p-shadow p-6 w-full  mb-6 flex flex-col items-center rounded bg-black text-white"
             >
               <h2 className="text-xl font-semibold mb-4">{pred.marketTitle}</h2>
 
@@ -323,8 +336,18 @@ export default function MyPredictionsPage() {
                   <span className="font-medium">Position:</span> $5,000
                 </div>
               </div>
+              <div className="flex w-full justify-between text-sm border-t pt-4 border-zinc-700">
+                {!pred.resolved && (
+                  <Button className="text-black" onClick={() => handleClaim(pred)}>
+                    Claim Winnings
+                  </Button>
+                )}
+                <Link href={`/markets/${pred.marketId}`}>
+                  <Button className="text-black">View Market</Button>
+                </Link>
+              </div>
             </motion.div>
-          </Link>
+          </div>
         ))}
       </Masonry>
 

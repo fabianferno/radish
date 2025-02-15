@@ -8,11 +8,16 @@ import { Input } from "@/components/ui/input";
 import dynamic from "next/dynamic";
 import Layout from "@/components/layouts/MainLayout";
 import { useMarket, useMarketActions } from "@/hooks/useMarkets";
-import { useAccount } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import { CustomConnectButton } from "@/components/ui/CustomConnectButton";
 import { request, gql } from "graphql-request";
-import { SUBGRAPH_URL } from "@/config/contracts";
+import {
+  CONTRACT_ADDRESSES,
+  ERC20_ABI,
+  SUBGRAPH_URL,
+} from "@/config/contracts";
 import { useChainId } from "wagmi";
+import { parseEther } from "viem";
 
 // Dynamically import TradingView chart to avoid SSR issues
 const TradingViewWidget = dynamic(
@@ -70,12 +75,14 @@ export default function MarketPage() {
     buy,
     sell,
     approve,
+    resolve,
     isLoading: actionLoading,
     error: actionError,
   }: {
     buy: any;
     sell: any;
     approve: any;
+    resolve: any;
     isLoading: boolean;
     error: any;
   } = useMarketActions(id as string);
@@ -142,13 +149,21 @@ export default function MarketPage() {
     setEstimatedCost(numericAmount * price);
   };
 
-  const handleTrade = async () => {
+  const handleTrade = async (tradeType: 'buy' | 'sell') => {
     if (!market || !amount) return;
     try {
-      if (activeTab === "yes") {
-        await buy(true, parseFloat(amount), market.contractAddress);
+      if (tradeType === 'buy') {
+        if (activeTab === "yes") {
+          await buy(true, parseFloat(amount), market.contractAddress);
+        } else {
+          await buy(false, parseFloat(amount), market.contractAddress);
+        }
       } else {
-        await buy(false, parseFloat(amount), market.contractAddress);
+        if (activeTab === "yes") {
+          await sell(true, parseFloat(amount), market.contractAddress);
+        } else {
+          await sell(false, parseFloat(amount), market.contractAddress);
+        }
       }
     } catch (err) {
       console.error("Trade failed:", err);
@@ -162,6 +177,31 @@ export default function MarketPage() {
     } catch (err) {
       console.error("Approve failed:", err);
     }
+  };
+
+  const handleResolution = async () => {
+    if (!market) return;
+    try {
+      await resolve(market.contractAddress);
+    } catch (err) {
+      console.error("Resolution failed:", err);
+    }
+  };
+  const {
+    writeContractAsync: mint,
+    isPending: mintIsPending,
+    error: mintError,
+  } = useWriteContract();
+  const handleMint = async () => {
+    try {
+      await mint({
+        address: CONTRACT_ADDRESSES[chainId].mockERC20,
+        abi: ERC20_ABI,
+        functionName: "mint",
+        chainId: chainId as any,
+        args: [address as `0x${string}`, parseEther("1000")],
+      });
+    } catch (error) { }
   };
 
   if (marketLoading) {
@@ -192,14 +232,17 @@ export default function MarketPage() {
 
   return (
     <Layout>
-      <div className="flex justify-between items-center border-b border-zinc-700 pb-5 mb-[60px]">
+      <div className="flex justify-between items-center border-b border-zinc-700 pb-5">
         <h1 className="text-5xl font-semibold text-black w-2/3">
           {market.title}
         </h1>
         <div className="text-right space-y-4">
           {market.creatorHandle && (
             <div className="text-3xl font-semibold text-black">
-              {market.creatorHandle}
+              Created by:{" "}
+              {market.creatorHandle.slice(0, 4) +
+                "..." +
+                market.creatorHandle.slice(-4)}
             </div>
           )}
           {market.target && (
@@ -207,12 +250,21 @@ export default function MarketPage() {
               Target: {(market.target / 1000000).toFixed(1)}M
             </div>
           )}
-          <div className="justify-end">
-            <CustomConnectButton dark />
+          <div className="flex justify-end gap-2 items-center">
+            <Button
+              variant={"outline"}
+              disabled={!address || mintIsPending}
+              onClick={handleMint}
+            >
+              Faucet xUSDC
+            </Button>
+            {!address && <div className="justify-end">
+              <CustomConnectButton dark />
+            </div>}
           </div>
         </div>
       </div>
-      <section className="p-wall-tilt mt-10">
+      <section className="mt-5">
         <div className="grid grid-cols-3 gap-8">
           {/* Left Column: Chart */}
           <div className="col-span-2 p-shadow p-6 rounded bg-black text-white">
@@ -288,18 +340,30 @@ export default function MarketPage() {
                     >
                       {actionLoading
                         ? "Processing..."
-                        : `Approve Contract to Buy ${activeTab.toUpperCase()} Shares`}
+                        : `Approve Contract to Trade ${activeTab.toUpperCase()} Shares`}
                     </Button>
-                    <Button
-                      onClick={handleTrade}
-                      className="w-full text-white"
-                      variant={activeTab === "yes" ? "success" : "destructive"}
-                      disabled={actionLoading || !amount}
-                    >
-                      {actionLoading
-                        ? "Processing..."
-                        : `Buy ${activeTab.toUpperCase()} Shares`}
-                    </Button>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button
+                        onClick={(e) => handleTrade('buy')}
+                        className="w-full text-white"
+                        variant={activeTab === "yes" ? "success" : "destructive"}
+                        disabled={actionLoading || !amount}
+                      >
+                        {actionLoading
+                          ? "Processing..."
+                          : `Buy ${activeTab.toUpperCase()}`}
+                      </Button>
+                      <Button
+                        onClick={(e) => handleTrade('sell')}
+                        className="w-full text-white"
+                        variant={activeTab === "yes" ? "success" : "destructive"}
+                        disabled={actionLoading || !amount}
+                      >
+                        {actionLoading
+                          ? "Processing..."
+                          : `Sell ${activeTab.toUpperCase()}`}
+                      </Button>
+                    </div>
 
                     {actionError && (
                       <p className="text-red-500 text-sm">
@@ -327,6 +391,17 @@ export default function MarketPage() {
                       {market.endDate}
                     </div>
                   </div>
+                  {address.toLowerCase() ==
+                    market.creatorHandle.toLowerCase() && (
+                      <Button
+                        onClick={handleResolution}
+                        className="w-full text-white"
+                        variant="destructive"
+                        disabled={actionLoading}
+                      >
+                        {actionLoading ? "Resolving..." : `Resolve Market`}
+                      </Button>
+                    )}
                 </div>
               </div>
             )}

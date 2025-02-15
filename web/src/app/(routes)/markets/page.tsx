@@ -7,6 +7,8 @@ import Masonry from "react-masonry-css";
 import { motion } from "framer-motion";
 import { useMarkets } from "@/hooks/useMarkets";
 import { CustomConnectButton } from "@/components/ui/CustomConnectButton";
+import { useEffect } from "react";
+import { useAccount } from "wagmi";
 
 const PlatformIcon = ({ platform }: { platform?: string }) => {
   const icons: { [key: string]: string } = {

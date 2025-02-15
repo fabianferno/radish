@@ -57,7 +57,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="bg-zinc-900 p-3 border border-zinc-700 rounded-lg shadow-lg">
         <p className="text-sm font-medium text-zinc-300">{label}</p>
         <p className="text-sm text-green-400">
-          Price: {payload[0].value.toFixed(2)}%
+          Price: {payload[0].value.toFixed(2)} USDC
         </p>
       </div>
     );
@@ -96,7 +96,7 @@ export default function TradingViewWidget({
             tick={{ fill: "#a1a1aa" }}
             tickLine={{ stroke: "#71717a" }}
             domain={[0, 100]}
-            tickFormatter={(value) => `${value}%`}
+            tickFormatter={(value) => `${value}`}
           />
           <Tooltip content={<CustomTooltip />} />
           <Area
